@@ -44,7 +44,7 @@ public:
   virtual double            getAmount() const = 0;
   QByteArray                getFormattedAmount() const { return QByteArray::number(getAmount(), 'f', 2); }
   virtual QByteArray        getTaxBaseAmount() const { return getFormattedAmount(); }
-  virtual const Recipients& getRecipients() const = 0;
+  virtual Recipients        getRecipients() const = 0;
   virtual VatExemption      getVatExemption() const { return NoVatExemption; }
   virtual bool              isSubjectToVat() const { return getNotSubjectToVatReason().isEmpty(); }
   virtual QString           getNotSubjectToVatReason() const = 0;
