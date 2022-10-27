@@ -12,9 +12,23 @@ static QMap<LROEDocument::ModelType, QString> LROETagTypes = {
   {LROEDocument::Model240, "LROEPJ240FacturasEmitidasConSGAltaPeticion"}
 };
 
-static QMap<LROEDocument::ModelType, QString> LROEXmlns = {
-  {LROEDocument::Model140, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_AltaPeticion_V1_0_2.xsd"},
-  {LROEDocument::Model240, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AltaPeticion_V1_0_2.xsd"}
+static QMap<
+  QPair<LROEDocument::ModelType, LROEDocument::OperationType>,
+  QString
+> LROEXmlns = {
+  { {LROEDocument::Model140, LROEDocument::AddOperation},      "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_AltaPeticion_V1_0_2.xsd"},
+  { {LROEDocument::Model240, LROEDocument::AddOperation},      "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AltaPeticion_V1_0_2.xsd"},
+  { {LROEDocument::Model140, LROEDocument::CancelOperation},   "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_AnulacionPeticion_V1_0_0.xsd"},
+  { {LROEDocument::Model240, LROEDocument::CancelOperation},   "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AnulacionPeticion_V1_0_0.xsd"},
+  { {LROEDocument::Model140, LROEDocument::CheckoutOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_ConsultaPeticion_V1_0_0.xsd"},
+  { {LROEDocument::Model240, LROEDocument::CheckoutOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_ConsultaPeticion_V1_0_0.xsd"}
+};
+
+static QMap<LROEDocument::OperationType, QString> LROEOperationTypes = {
+  {LROEDocument::AddOperation,      "A00"},
+  {LROEDocument::ModifyOperation,   "M00"},
+  {LROEDocument::CancelOperation,   "AN0"},
+  {LROEDocument::CheckoutOperation, "C00"}
 };
 
 static QDomElement generateEmitterXml(QDomDocument& document)
@@ -30,11 +44,12 @@ static QDomElement generateEmitterXml(QDomDocument& document)
   return root;
 }
 
-LROEDocument::LROEDocument(ModelType modelType)
+LROEDocument::LROEDocument(ModelType modelType, OperationType operationType)
 {
   QDomElement header    = createElement("Cabecera");
   QDomElement modelEl   = createElement("Modelo");
   QDomElement versionEl = createElement("Version");
+  auto xmlns = LROEXmlns.find({modelType, operationType});
 
   model       = modelType;
   root        = createElement(xmlScope + ':' + LROETagTypes[modelType]);
@@ -43,8 +58,10 @@ LROEDocument::LROEDocument(ModelType modelType)
   emitterEl   = createElement("ObligadoTributario");
   periodEl    = createElement("Ejercicio");
   operationEl = createElement("Operacion");
+  if (xmlns != LROEXmlns.end())
+  root.setAttribute("xmlns:" + xmlScope, xmlns.value());
   modelEl.appendChild(createTextNode(QString::number(static_cast<int>(modelType))));
-  root.attribute("xmlns:" + xmlScope, LROEXmlns[modelType]);
+  operationEl.appendChild(createTextNode(LROEOperationTypes[operationType]));
   versionEl.appendChild(createTextNode(apiVersion));
   header.appendChild(modelEl);
   header.appendChild(typeEl);
@@ -57,17 +74,14 @@ LROEDocument::LROEDocument(ModelType modelType)
   appendChild(root);
 }
 
-void LROEDocument::initializeIncomeWithInvoices()
-{
-  setDocumentType(1, 1);
-  incomeListEl = createElement("Ingresos");
-  root.appendChild(incomeListEl);
-}
-
 void LROEDocument::setDocumentType(int type, int subType)
 {
   documentType    = type;
   documentSubtype = subType;
+  while (!typeEl.lastChild().isNull())
+    typeEl.removeChild(typeEl.lastChild());
+  while (!subtypeEl.lastChild().isNull())
+    subtypeEl.removeChild(subtypeEl.lastChild());
   typeEl.appendChild(createTextNode(QString::number(type)));
   subtypeEl.appendChild(createTextNode(documentTypeString()));
 }
@@ -81,39 +95,6 @@ void LROEDocument::setActivityYear(int value)
 {
   year = value;
   periodEl.appendChild(createTextNode(QString::number(year)));
-}
-
-void LROEDocument::appendInvoiceFromFile(const QString& filepath)
-{
-  QFile file(filepath);
-
-  if (file.open(QIODevice::ReadOnly))
-    appendInvoice(file.readAll());
-  else
-    throw std::runtime_error("LROEDocument::appendInvoiceFromFile: cannot open " + filepath.toStdString());
-}
-
-void LROEDocument::appendInvoice(const QString& invoice)
-{
-  QDomElement incomeDetailsEl = createElement("DetalleRenta");
-  QDomElement epigraphEl      = createElement("Epigrafe");
-
-  epigraphEl.appendChild(createTextNode("197330"));
-  incomeDetailsEl.appendChild(epigraphEl);
-  appendInvoice(invoice, incomeDetailsEl);
-}
-
-void LROEDocument::appendInvoice(const QString& invoice, QDomElement incomeDetailsEl)
-{
-  QDomElement invoiceEl       = createElement("Ingreso");
-  QDomElement tbaiEl          = createElement("TicketBai");
-  QDomElement incomeEl        = createElement("Renta");
-
-  tbaiEl.appendChild(createTextNode(invoice.toUtf8().toBase64()));
-  incomeEl.appendChild(incomeDetailsEl);
-  invoiceEl.appendChild(tbaiEl);
-  invoiceEl.appendChild(incomeEl);
-  incomeListEl.appendChild(invoiceEl);
 }
 
 bool LROEDocument::loadFromFile(const QString& filepath)

@@ -1,5 +1,6 @@
 #include "lroesubmitprocess.h"
 #include "tbaicertificate.h"
+#include "invoiceuploaddocument.h"
 #include <QDir>
 #include <QJsonObject>
 #include <QJsonDocument>
@@ -13,12 +14,14 @@ const QByteArray LROESubmitProcess::customHeaderPrefix = "eus-bizkaia-n3-";
 const QString    LROESubmitProcess::dumpPath = LROESubmitProcess::getDumpPath();
 static const QByteArray productionHostname  = "https://sarrerak.bizkaia.eus";
 static const QByteArray developmentHostname = "https://pruesarrerak.bizkaia.eus";
+QString testCif("A99805061");
+QString testCompanyName("TestCompany");
 
 static bool productionEnv() { return qgetenv("LROE_ENVIRONMENT") == "production"; }
 
 static const QByteArray& lroeHostname() { return productionEnv() ? productionHostname : developmentHostname; }
-static QString getCompanyName() { return productionEnv() ? CompanyData::self.name : "TestCompany"; }
-static QString getCif()         { return productionEnv() ? CompanyData::self.cif : "A99805061"; }
+static QString getCompanyName() { return productionEnv() ? CompanyData::self.name : testCompanyName; }
+static QString getCif()         { return productionEnv() ? CompanyData::self.cif : testCif; }
 
 LROESubmitProcess::LROESubmitProcess(QObject *parent) : QObject(parent)
 {
@@ -87,10 +90,9 @@ static void backupDocumentForDebugPurposes(const LROEDocument& document)
 
 void LROESubmitProcess::makeQueryFor(const QStringList &tbaiFiles)
 {
-  LROEDocument   document(LROEDocument::Model240);
+  InvoiceUploadDocument document(LROEDocument::Model240, LROEDocument::AddOperation);
   QNetworkReply* reply;
 
-  document.initializeIncomeWithInvoices();
   document.setActivityYear(2022);
   document.setOperationId("TEST01");
   for (const QString& path : tbaiFiles)
@@ -182,7 +184,9 @@ QNetworkReply* LROESubmitProcess::sendDocument(const LROEDocument& document)
   QByteArray        compressedData;
   QCurl             curl;
 
-  QCompressor::gzipCompress(document.toByteArray(), compressedData);
+  QByteArray data = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>";
+  data += document.toString().toUtf8();
+  QCompressor::gzipCompress(data, compressedData);
 
   QFile file("Ejemplo_1_LROE_PF_140_IngresosConFacturaConSG_79732487C.xml.gz");
   if (file.open(QIODevice::ReadOnly))

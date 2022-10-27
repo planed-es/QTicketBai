@@ -10,6 +10,7 @@ class LROESubmitProcessTest : public QObject
 private slots:
   void initTestCase();
   void canSubmitExampleDocument();
+  void canSubmitInvoice();
   void cleanupTestCase();
 };
 

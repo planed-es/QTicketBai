@@ -14,28 +14,29 @@ public:
     Model240 = 240
   };
 
-  LROEDocument(ModelType);
+  enum OperationType
+  {
+    AddOperation,
+    ModifyOperation,
+    CancelOperation,
+    CheckoutOperation
+  };
 
-  void initializeIncomeWithInvoices(); // LROE PF 140-240 1.1
+  LROEDocument(ModelType, OperationType);
+
   void setOperationId(const QByteArray&);
   void setActivityYear(int year);
   void setDocumentType(int type, int subType);
   bool loadFromFile(const QString& path);
 
-  void appendInvoiceFromFile(const QString& filepath);
-  void appendInvoice(const QString&);
-  void appendInvoice(const QString&, QDomElement incomeDetails);
-
   QString documentTypeString() const { return QString::number(documentType) + '.' + QString::number(documentSubtype); }
   ModelType modelType() const { return model; }
   int activityYear() const { return year; }
 
-private:
-
+protected:
   ModelType   model;
   QDomElement root;
   QDomElement typeEl, subtypeEl, periodEl, operationEl, emitterEl;
-  QDomElement incomeListEl;
   int         documentType, documentSubtype;
   int         year;
 };
