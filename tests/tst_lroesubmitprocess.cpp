@@ -135,3 +135,16 @@ void LROESubmitProcessTest::canGenerateInvoices()
   QCOMPARE(response.status, 200);
 }
 
+void LROESubmitProcessTest::canQueryInvoices()
+{
+  LROESubmitProcess lroe;
+  TbaiQueryDocument document(LROEDocument::Model240);
+  LROESubmitProcess::Response response;
+  QNetworkReply* reply;
+
+  document.setActivityYear(2022);
+  std::cout << "DEBUG DOC:\n" << document.toString(2).toStdString() << std::endl;
+  reply = lroe.sendDocument(document);
+  response = lroe.parseResponse(reply);
+  QCOMPARE(response.status, 200);
+}

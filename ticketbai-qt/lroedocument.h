@@ -19,7 +19,7 @@ public:
     AddOperation,
     ModifyOperation,
     CancelOperation,
-    CheckoutOperation
+    QueryOperation
   };
 
   LROEDocument(ModelType, OperationType);

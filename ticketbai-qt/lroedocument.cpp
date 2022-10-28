@@ -20,15 +20,15 @@ static QMap<
   { {LROEDocument::Model240, LROEDocument::AddOperation},      "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AltaPeticion_V1_0_2.xsd"},
   { {LROEDocument::Model140, LROEDocument::CancelOperation},   "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_AnulacionPeticion_V1_0_0.xsd"},
   { {LROEDocument::Model240, LROEDocument::CancelOperation},   "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AnulacionPeticion_V1_0_0.xsd"},
-  { {LROEDocument::Model140, LROEDocument::CheckoutOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_ConsultaPeticion_V1_0_0.xsd"},
-  { {LROEDocument::Model240, LROEDocument::CheckoutOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_ConsultaPeticion_V1_0_0.xsd"}
+  { {LROEDocument::Model140, LROEDocument::QueryOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_ConsultaPeticion_V1_0_0.xsd"},
+  { {LROEDocument::Model240, LROEDocument::QueryOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_ConsultaPeticion_V1_0_0.xsd"}
 };
 
 static QMap<LROEDocument::OperationType, QString> LROEOperationTypes = {
-  {LROEDocument::AddOperation,      "A00"},
-  {LROEDocument::ModifyOperation,   "M00"},
-  {LROEDocument::CancelOperation,   "AN0"},
-  {LROEDocument::CheckoutOperation, "C00"}
+  {LROEDocument::AddOperation,    "A00"},
+  {LROEDocument::ModifyOperation, "M00"},
+  {LROEDocument::CancelOperation, "AN0"},
+  {LROEDocument::QueryOperation,  "C00"}
 };
 
 static QDomElement generateEmitterXml(QDomDocument& document)
