@@ -46,53 +46,86 @@ int main()
 The next step is to create your own invoices object, implementing the `TbaiInvoiceInterface`.
 
 ### Generating a TicketBAI signature for an invoice
+The signing process is asynchronous, so you'll need to listen to signals in order to intercept
+the generated signature and/or your definitive invoice XML including the signature.
+
+##### Synchronous
+Let's first see how to sign an invoice synchronously:
 
 ```
 #include <ticketbai-qt/tbaisignprocess.h>
-#include <QFile>
+#include <iostream>
 
-static void sign_invoice(const TbaiInvoiceInterface& invoice, std::function<void()> done)
+static void sign_invoice(const TbaiInvoiceInterface& invoice)
 {
-  auto* signProcess = new TbaiSignProcess();
+  TbaiSignProcess signProvider;
 
-  //
-  // Listen to signals
-  //
-
-  // The `finished` signal triggers at the end of the process, regardless of whether it succeeded or not. 
-  QObject::connect(signProcess, &TbaiSignProcess::finished, [signProcess]() { signProcess->deleteLater(); });
-
-  // The `failed` signal triggers at the end of the process to report an error when generating the TicketBAI invoice:
-  QObject::connect(signProcess, &TbaiSignProcess::failed, [](QString error) { qDebug() << error; });
-
-  // The `generatedSignature` triggers when the TicketBAI signature is available, allowing you to store the
-  // generated signature, which will be needed when generating the next invoices:
-  QObject::connect(signProcess, &TbaiSignProcess::generatedSignature, [](QByteArray signature)
+  QObject::connect(&signProvider, &TbaiSignProcess::generatedXml, [](QByteArray xml)
   {
-    // In this handler, you're expected to store the signature, so that from now on, the
-    // `getSignature` virtual method our `invoice` object returns the value of `signature`.
-    qDebug() << "New TicketBAI signature:" << signature;
+    std::cout << "Generated xml:\n" << xml.toStdString() << std::endl;
   });
-
-  // The `generatedXml` triggers when the signing process has ended for the current invoice, and gives you
-  // the opportunity to save the invoice's associated XML document, which will be needed when submitting
-  // your invoices to LROE.
-  QObject::connect(signProcess, &TbaiSignProcess::generatedXml, [](QByteArray xml)
-  {
-    QFile output("/tmp/signed-invoice.xml");
-    if (output.open(QIODevice::WriteOnly))
-      output << xml;
-  });
-
-  //
-  // Start the signing process
-  //
-  signerProcess->sign(invoice);
-
-  // Note that this process is asynchronous: the `sign` method won't wait for the signing process to
-  // end before returning.
+  signProvider.sign(invoice);
+  signProvider.wait();
 }
 ```
+
+##### Asynchronous
+In order to sign your invoices asynchronously, we'll just need to make use a pointer to
+ensure our `TbaiSignProcess` object doesn't expire at the end of the scope. We'll then
+listen to the `finished` signal to know when to clean up the pointer:
+
+```
+#include <ticketbai-qt/tbaisignprocess.h>
+#include <iostream>
+
+static void sign_invoice(const TbaiInvoiceInterface& invoice)
+{
+  TbaiSignProcess* signProvider = new TbaiSignProcess();
+
+  QObject::connect(signProvider, &TbaiSignProcess::generatedXml, [](QByteArray xml)
+  {
+    std::cout << "Generated xml:\n" << xml.toStdString() << std::endl;
+  });
+  QObject::connect(signProvider, &TbaiSignProcess::finished, []()
+  {
+    signProvider->deleteLater();
+  });
+  signProvider.sign(invoice);
+}
+```
+
+##### Catching errors
+Errors might happen during the signing process. You should also listen to the `failure` signal
+so you can report the errors:
+
+```
+QObject::connect(signProcess, &TbaiSignProcess::failed, [](QString error)
+{
+  qDebug() << error;
+});
+```
+
+##### Signature
+As you will need to use the generated signature to properly sign the next invoices, it may be a good
+idea to store the signature someplace easily accessible for your signing process. When signing an invoice,
+on top of intercepting the generated invoice XML, you can also intercept the signature using the `generatedSignature`
+signal:
+
+```
+QObject::connect(signProcess, &TbaiSignProcess::generatedSignature, [](QByteArray signature)
+{
+  // In this handler, you're expected to store the signature, so that from now on, the
+  // `getSignature` virtual method our `invoice` object returns the value of `signature`.
+  qDebug() << "New TicketBAI signature:" << signature;
+});
+```
+
+Your `TbaiInvoiceInterface` implementation *must* return the value of `signature` when its `getSignature`
+method gets called. This will be relevant when signing the next invoice.
+
+### Sending LROE documents
+
+TODO
 
 ## Configuration
 
