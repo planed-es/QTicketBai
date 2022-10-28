@@ -2,6 +2,7 @@
 #include "invoiceinterface.h"
 #include "companydata.h"
 #include <QUrl>
+#include <QFile>
 
 #define TBAI_VERSION          "1.2"
 #define TBAI_SOFTWARE_VERSION "1.0"
@@ -218,11 +219,14 @@ static QDomElement generatePreviousInvoiceXml(QDomDocument& document, const Tbai
   QDomElement dateEl      = document.createElement("FechaExpedicionFacturaAnterior");
   QDomElement signatureEl = document.createElement("SignatureValueFirmaFacturaAnterior");
 
-  serieEl.appendChild(document.createTextNode(invoice.getSeries()));
+  if (invoice.getSeries().length() > 0)
+  {
+    serieEl.appendChild(document.createTextNode(invoice.getSeries()));
+    root.appendChild(serieEl);
+  }
   numberEl.appendChild(document.createTextNode(invoice.getNumber()));
   dateEl.appendChild(document.createTextNode(invoice.getDate().toString("dd-MM-yyyy")));
   signatureEl.appendChild(document.createTextNode(invoice.getSignature()));
-  root.appendChild(serieEl);
   root.appendChild(numberEl);
   root.appendChild(dateEl);
   root.appendChild(signatureEl);
@@ -274,11 +278,11 @@ void TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
   root = createElement("T:TicketBai");
   root.setAttribute("xmlns:T", "urn:ticketbai:emision");
 
-  QDomElement headerEl        = createElement("Cabacera");
+  QDomElement headerEl        = createElement("Cabecera");
   QDomElement subjectsEl      = createElement("Sujetos");
   QDomElement invoiceEl       = createElement("Factura");
   QDomElement footPrintEl     = createElement("HuellaTBAI");
-  QDomElement idVersionTbaiEl = createElement("IDVerionTBAI");
+  QDomElement idVersionTbaiEl = createElement("IDVersionTBAI");
   QDomElement deviceIdEl      = createElement("NumSerieDispositivo");
 
   deviceIdEl.appendChild(createTextNode(getDeviceUid()));
@@ -304,9 +308,52 @@ void TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
   appendChild(root);
 }
 
+bool TbaiDocument::loadFromFile(const QString& path)
+{
+  QFile file(path);
+
+  if (file.open(QIODevice::ReadOnly) && loadFrom(file.readAll()))
+    return true;
+  qDebug() << "TbaiDocument::loadFromFile: could not load file" << path;
+  return false;
+}
+
+bool TbaiDocument::loadFrom(const QByteArray& xml)
+{
+  QString errorMessage;
+  int errorLine, errorColumn;
+
+  clear();
+  if (setContent(xml, false, &errorMessage, &errorLine, &errorColumn))
+    root = elementsByTagName("T:TicketBai").item(0).toElement();
+  else
+    qDebug() << "TbaiDocument::loadFrom: xml parse error at" << errorLine << ':' << errorColumn << ':' << errorMessage;
+  return !root.isNull();
+}
+
 void TbaiDocument::appendSignature(const QDomElement& signatureEl)
 {
   root.appendChild(signatureEl);
+}
+
+bool TbaiDocument::isSigned() const
+{
+  return root.elementsByTagName("ds:Signature").isEmpty();
+}
+
+QByteArray TbaiDocument::getSignature() const
+{
+  QDomNodeList matches = root.elementsByTagName("ds:SignatureValue");
+  QDomNode signatureNode = matches.item(0);
+  QString signature = signatureNode.lastChild().toText().data();
+
+  if (signatureNode.isNull())
+    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document is not signed.");
+  if (matches.count() != 1)
+    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document contains several signatures.");
+  if (signature.length() == 0)
+    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document contains a signature, but it is empty.");
+  return signature.toUtf8();
 }
 
 static QString getDefaultFileNameFor(const TbaiInvoiceInterface& invoice)
