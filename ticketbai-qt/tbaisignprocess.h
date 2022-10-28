@@ -23,6 +23,7 @@ public:
 
 signals:
   void generatedSignature(QByteArray);
+  void generatedDocument(TbaiDocument tbaiDocument);
   void generatedXml(QByteArray);
   void failed(QString error);
   void finished();
@@ -33,7 +34,6 @@ private slots:
 
 private:
   void launchAutofirma();
-  bool findSignatureIn(const QDomDocument&);
   void generateXml(const QDomDocument& xmlSignature);
 
   TbaiDocument   document;

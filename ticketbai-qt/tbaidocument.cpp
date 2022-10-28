@@ -338,7 +338,7 @@ void TbaiDocument::appendSignature(const QDomElement& signatureEl)
 
 bool TbaiDocument::isSigned() const
 {
-  return root.elementsByTagName("ds:Signature").isEmpty();
+  return !root.elementsByTagName("ds:Signature").isEmpty();
 }
 
 QByteArray TbaiDocument::getSignature() const
