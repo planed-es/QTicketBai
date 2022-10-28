@@ -42,7 +42,7 @@ void LROEClient::submit(const LROEDocument& document, std::function<void(const R
     if (lroeResponse.status != 200)
       qDebug() << "QNetworkReply: error:" << httpResponse->errorString();
     httpResponse->deleteLater();
-    callback(parseResponse(httpResponse));
+    callback(lroeResponse);
   });
 }
 
@@ -96,21 +96,24 @@ QJsonDocument LROEClient::jsonHeaderFor(const LROEDocument& document)
 LROEClient::Response LROEClient::parseResponse(QNetworkReply* reply)
 {
   Response   data;
-  QByteArray body;
 
   data.status  = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toUInt();
   data.type    = reply->rawHeader(customHeaderPrefix + "tipo-respuesta");
   data.code    = reply->rawHeader(customHeaderPrefix + "codigo-respuesta");
   data.message = QString::fromUtf8(reply->rawHeader(customHeaderPrefix + "mensaje-respuesta"));
   data.id      = reply->rawHeader(customHeaderPrefix + "identificativo");
-  if (reply->header(QNetworkRequest::ContentTypeHeader) == "application/xml") // according to the documentation, these dimwits might've misspelled application/xml as application/XML.
+  if (reply->header(QNetworkRequest::ContentTypeHeader).toString().startsWith("application/xml"))
   {
     QByteArray rawBody = reply->readAll();
+    QByteArray body;
+    bool success = true;
 
     if (reply->rawHeader("Content-Encoding") == "gzip")
-      QCompressor::gzipDecompress(reply->readAll(), body);
+      success = QCompressor::gzipDecompress(rawBody, body);
     else
       body = rawBody;
+    if (!success)
+      qDebug() << "/!\\ Could not process response body for response" << data;
     data.document.setContent(body);
   }
   return data;
