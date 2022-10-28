@@ -140,6 +140,5 @@ void LROESubmitProcessTest::canGenerateInvoices()
   response = lroe.parseResponse(reply);
   logLROEResponse(response);
   QCOMPARE(response.status, 200);
-
 }
 
