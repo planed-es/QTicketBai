@@ -57,11 +57,17 @@ static QDomElement generateRecipientXml(QDomDocument& document, const TbaiInvoic
     QDomElement recipientEl = document.createElement("IDDestinatario");
     QDomElement cifEl       = document.createElement("NIF");
     QDomElement nameEl      = document.createElement("ApellidosNombreRazonSocial");
+    QDomElement postalCodeEl= document.createElement("CodigoPostal");
 
     cifEl.appendChild(document.createTextNode(cif));
     nameEl.appendChild(document.createTextNode(name));
     recipientEl.appendChild(cifEl);
     recipientEl.appendChild(nameEl);
+    if (recipient.postalCode.length() > 0)
+    {
+      postalCodeEl.appendChild(document.createTextNode(recipient.postalCode));
+      recipientEl.appendChild(postalCodeEl);
+    }
     root.appendChild(recipientEl);
   }
   return root;
@@ -111,7 +117,8 @@ static QDomElement generateInvoiceHeader(QDomDocument& document, const TbaiInvoi
   numberEl.appendChild(document.createTextNode(invoice.getNumber()));
   dateEl  .appendChild(document.createTextNode(invoice.getDate().toString("dd-MM-yyyy")));
   hourEl  .appendChild(document.createTextNode(invoice.getDate().toString("hh:mm:ss")));
-  root.appendChild(serieEl);
+  if (invoice.getSeries().length() > 0)
+    root.appendChild(serieEl);
   root.appendChild(numberEl);
   root.appendChild(dateEl);
   root.appendChild(hourEl);
@@ -162,6 +169,7 @@ static QDomElement generateVatInvoiceBreakdown(QDomDocument& document, const Tba
 static QDomElement generateInvoiceBreakdown(QDomDocument& document, const TbaiInvoiceInterface& invoice)
 {
   QDomElement root = document.createElement("TipoDesglose");
+  QDomElement wrapper = document.createElement("DesgloseFactura");
   QDomElement subjectEl;
 
   if (invoice.isSubjectToVat())
@@ -176,7 +184,7 @@ static QDomElement generateInvoiceBreakdown(QDomDocument& document, const TbaiIn
       exemptionEl.appendChild(generateVatInvoiceBreakdown(document, invoice));
       break ;
     default:
-      exemptionEl = document.createElement("Exent");
+      exemptionEl = document.createElement("Exenta");
       throw std::runtime_error("Tax exemption not implemented in TbaiDocument");
     }
     subjectEl.appendChild(exemptionEl);
@@ -194,7 +202,8 @@ static QDomElement generateInvoiceBreakdown(QDomDocument& document, const TbaiIn
     notSubjectEl.appendChild(causeEl);
     notSubjectEl.appendChild(amountEl);
   }
-  root.appendChild(subjectEl);
+  wrapper.appendChild(subjectEl);
+  root.appendChild(wrapper);
   return root;
 }
 
@@ -260,7 +269,7 @@ void TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
 {
   clear();
   root = createElement("T:TicketBai");
-  root.attribute("xmlns:T", "urn:ticketbai:emision");
+  root.setAttribute("xmlns:T", "urn:ticketbai:emision");
 
   QDomElement headerEl        = createElement("Cabacera");
   QDomElement subjectsEl      = createElement("Sujetos");
@@ -275,7 +284,8 @@ void TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
   root.appendChild(headerEl);
 
   subjectsEl.appendChild(generateEmitterXml(*this, invoice));
-  subjectsEl.appendChild(generateRecipientXml(*this, invoice));
+  if (invoice.getRecipients().size() > 0)
+    subjectsEl.appendChild(generateRecipientXml(*this, invoice));
   if (invoice.getRecipients().size() > 1)
     subjectsEl.appendChild(pluralSubjectHintXml(*this, invoice));
   root.appendChild(subjectsEl);

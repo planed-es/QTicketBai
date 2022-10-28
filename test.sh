@@ -5,7 +5,7 @@ CERTIFICATE_ARCHIVE_VERSION="1_0_2"
 CERTIFICATE_ARCHIVE="batuz_lroe_ziurtagiriak_kit_certificados_v$CERTIFICATE_ARCHIVE_VERSION"
 CERTIFICATE_FOLDER="Batuz_LROE_Ziurtagiriak_KIT_Certificados_V$CERTIFICATE_ARCHIVE_VERSION"
 EXAMPLE_ARCHIVE="Ejemplos"
-TESTDIR=ticketbai-test-env
+TESTDIR="$PWD/ticketbai-test-env"
 
 ##
 ## Download testing resources
@@ -31,6 +31,17 @@ else
   echo "- examples are already present. skipping download."
 fi
 
+cd -
+
+cp ./examples/invoice-upload.xml "$TESTDIR/invoice-upload.xml"
+
+##
+## Download AutoFirma
+##
+if ! [ -f "$TESTDIR/autofirma.jar" ] ; then
+  scripts/install-autofirma.sh "$TESTDIR/autofirma.jar"
+fi
+
 ##
 ## Prepare environment variables
 ##
@@ -43,9 +54,14 @@ if [ -z "$CERTIFICATE_NAME" ] ; then
 fi
 
 export LROE_ENVIRONMENT="test"
-export TBAI_CERTIFICATE_PATH="$PWD/$CERTIFICATE_FOLDER/$CERTIFICATE_NAME.p12"
-export TBAI_CERTIFICATE_PASSWORD=`cat "$PWD/$CERTIFICATE_FOLDER/${CERTIFICATE_NAME}_pin.txt"`
-export TBAI_EXAMPLES_PATH="$PWD"
+export TBAI_CERTIFICATE_PATH="$TESTDIR/$CERTIFICATE_FOLDER/$CERTIFICATE_NAME.p12"
+export TBAI_CERTIFICATE_PASSWORD=`cat "$TESTDIR/$CERTIFICATE_FOLDER/${CERTIFICATE_NAME}_pin.txt"`
+export TBAI_CERTIFICATE_ALIAS=`scripts/alias_from_certificate.sh`
+export TBAI_EXAMPLES_PATH="$TESTDIR"
+export TBAI_LICENSE="TBAIBI00000000PRUEBA"
+export TBAI_SOFTWARE_NIF="A99800005"
+export TBAI_SOFTWARE_NAME="SOFTWARE GARANTE TICKETBAI PRUEBA"
+export AUTOFIRMA_PATH="$TESTDIR"
 
 if ! [ -f "$TBAI_CERTIFICATE_PATH" ] ; then
   echo "Certificate file not found: " $TBAI_CERTIFICATE_PATH
@@ -60,9 +76,8 @@ fi
 ##
 ## Run tests
 ##
-cd -
 echo "+ Running the tests"
 
-tests/lroesubmitprocess
+build/tests/lroesubmitprocess
 
 #rm -rf "$TESTDIR"

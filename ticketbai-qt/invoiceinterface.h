@@ -37,7 +37,7 @@ public:
   virtual Type              getInvoiceType() const = 0;
   virtual const QByteArray& getSignature() const = 0;
   virtual const QDateTime&  getDate() const = 0;
-  virtual const QByteArray& getSeries() const = 0;
+  virtual QByteArray        getSeries() const { return QByteArray(); };
   virtual const QByteArray& getNumber() const = 0;
   virtual const QString&    getName() const = 0;
   virtual const QString&    getDescription() const = 0;

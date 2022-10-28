@@ -88,6 +88,13 @@ void TbaiSignProcess::launchAutofirma()
   autofirma->start(javaPath, params, QIODevice::ReadOnly);
 }
 
+bool TbaiSignProcess::wait()
+{
+  autofirma->waitForStarted();
+  autofirma->waitForFinished();
+  return autofirma->state() == QProcess::NotRunning && autofirma->exitCode() == 0;
+}
+
 bool TbaiSignProcess::findSignatureIn(const QDomDocument& signatureDocument)
 {
   QDomNodeList signatureCandidates;

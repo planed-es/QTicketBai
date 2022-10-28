@@ -4,6 +4,7 @@
 #include "ticketbai-qt/companydata.h"
 #include "ticketbai-qt/invoiceinterface.h"
 #include "ticketbai-qt/tbaidocument.h"
+#include "ticketbai-qt/tbaisignprocess.h"
 #include "ticketbai-qt/invoiceuploaddocument.h"
 #include <qcurl.h>
 #include <iostream>
@@ -66,40 +67,79 @@ void LROESubmitProcessTest::canSubmitExampleDocument()
 
 class InvoiceTest : public TbaiInvoiceInterface
 {
+public:
   QDateTime date = QDateTime::currentDateTime();
   QByteArray signature, series, number;
   QString name;
-public:
+
   TbaiInvoiceInterface* getPreviousInvoice() const override { return nullptr; }
   Type getInvoiceType() const override { return InvoiceType; }
   const QByteArray& getSignature() const override { return signature; }
   const QDateTime&  getDate() const override { return date; }
-  const QByteArray& getSeries() const override { return series; }
   const QByteArray& getNumber() const override { return number; }
   const QString&    getName() const override { return name; }
   const QString&    getDescription() const override { return name; }
   double            getAmount() const override { return 42.42; }
-  Recipients        getRecipients() const override { return {}; }
   QString           getNotSubjectToVatReason() const override { return ""; }
+
+  Recipients        getRecipients() const override
+  {
+    return {
+      CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", "0505050505", "0606060606", "12345", "e@ma.il"}
+    };
+  }
 };
 
 void LROESubmitProcessTest::canSubmitInvoice()
 {
   LROESubmitProcess               lroe;
   InvoiceUploadDocument           document(LROEDocument::Model240, LROEDocument::AddOperation);
-  TbaiDocument                    tbai_document;
+  TbaiSignProcess                 tbai_sign;
   LROESubmitProcess::LROEResponse response;
+  QString invoiceXml;
   InvoiceTest invoice;
   QNetworkReply* reply;
 
   testCif = CompanyData::self.cif;
   testCompanyName = CompanyData::self.name;
-  tbai_document.createFrom(invoice);
   document.setActivityYear(2022);
-  document.appendInvoice(tbai_document.toString());
-  std::cout << "DEBUG DOC:\n" << document.toString(2).toStdString() << "\nEND DEBUG DOC" << std::endl;
+  document.appendInvoiceFromFile(qgetenv("TBAI_EXAMPLES_PATH") + "/invoice-upload.xml");
+  //std::cout << "DEBUG TBAI:\n" << invoiceXml.toStdString() << "\nEND DEBUG TBAI DOC" << std::endl;
+  //std::cout << "DEBUG DOC:\n" << document.toString(2).toStdString() << "\nEND DEBUG DOC" << std::endl;
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   logLROEResponse(response);
   QCOMPARE(response.status, 200);
 }
+
+void LROESubmitProcessTest::canGenerateInvoices()
+{
+  LROESubmitProcess               lroe;
+  InvoiceUploadDocument           document(LROEDocument::Model240, LROEDocument::AddOperation);
+  TbaiSignProcess                 tbai_sign;
+  LROESubmitProcess::LROEResponse response;
+  QString invoiceXml;
+  InvoiceTest invoice;
+  QNetworkReply* reply;
+
+  testCif = CompanyData::self.cif;
+  testCompanyName = CompanyData::self.name;
+  invoice.number = "1";
+  invoice.name = "Parrot sale";
+  QObject::connect(&tbai_sign, &TbaiSignProcess::generatedXml, [&invoiceXml](QString xml)
+  {
+    invoiceXml = xml;
+  });
+  tbai_sign.sign(invoice);
+  QVERIFY(tbai_sign.wait());
+  document.setActivityYear(2022);
+  document.appendInvoice(invoiceXml);
+  //std::cout << "DEBUG TBAI:\n" << invoiceXml.toStdString() << "\nEND DEBUG TBAI DOC" << std::endl;
+  //std::cout << "DEBUG DOC:\n" << document.toString(2).toStdString() << "\nEND DEBUG DOC" << std::endl;
+  reply = lroe.sendDocument(document);
+  response = lroe.parseResponse(reply);
+  logLROEResponse(response);
+  QCOMPARE(response.status, 200);
+
+}
+

@@ -11,6 +11,7 @@ private slots:
   void initTestCase();
   void canSubmitExampleDocument();
   void canSubmitInvoice();
+  void canGenerateInvoices();
   void cleanupTestCase();
 };
 

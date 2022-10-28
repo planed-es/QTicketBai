@@ -19,6 +19,7 @@ public:
   static bool checkSettings();
 
   void sign(const TbaiInvoiceInterface&);
+  bool wait();
 
 signals:
   void generatedSignature(QByteArray);
