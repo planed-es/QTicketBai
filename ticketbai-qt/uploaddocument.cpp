@@ -8,7 +8,7 @@ static QString listTagFor(LROEDocument::ModelType type)
 
 static QString itemTagFor(LROEDocument::ModelType type)
 {
-  return type == LROEDocument::Model140 ? "FacturaEmitida" : "Ingreso";
+  return type == LROEDocument::Model240 ? "FacturaEmitida" : "Ingreso";
 }
 
 static QString tbaiTagFor(LROEDocument::OperationType type)
