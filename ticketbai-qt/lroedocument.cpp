@@ -74,14 +74,18 @@ LROEDocument::LROEDocument(ModelType modelType, OperationType operationType)
   appendChild(root);
 }
 
+void resetElement(QDomElement& el)
+{
+  while (!el.lastChild().isNull())
+    el.removeChild(el.lastChild());
+}
+
 void LROEDocument::setDocumentType(int type, int subType)
 {
   documentType    = type;
   documentSubtype = subType;
-  while (!typeEl.lastChild().isNull())
-    typeEl.removeChild(typeEl.lastChild());
-  while (!subtypeEl.lastChild().isNull())
-    subtypeEl.removeChild(subtypeEl.lastChild());
+  resetElement(typeEl);
+  resetElement(subtypeEl);
   typeEl.appendChild(createTextNode(QString::number(type)));
   subtypeEl.appendChild(createTextNode(documentTypeString()));
 }

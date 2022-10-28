@@ -46,30 +46,33 @@ static QDomElement generateEmitterXml(QDomDocument& document, const TbaiInvoiceI
   return root;
 }
 
+static QDomElement generateRecipientXml(QDomDocument& document, const CompanyData& recipient)
+{
+  const auto  cif         = recipient.cif;
+  const auto  name        = recipient.name;
+  QDomElement recipientEl = document.createElement("IDDestinatario");
+  QDomElement cifEl       = document.createElement("NIF");
+  QDomElement nameEl      = document.createElement("ApellidosNombreRazonSocial");
+  QDomElement postalCodeEl= document.createElement("CodigoPostal");
+
+  cifEl.appendChild(document.createTextNode(cif));
+  nameEl.appendChild(document.createTextNode(name));
+  recipientEl.appendChild(cifEl);
+  recipientEl.appendChild(nameEl);
+  if (recipient.postalCode.length() > 0)
+  {
+    postalCodeEl.appendChild(document.createTextNode(recipient.postalCode));
+    recipientEl.appendChild(postalCodeEl);
+  }
+  return recipientEl;
+}
+
 static QDomElement generateRecipientXml(QDomDocument& document, const TbaiInvoiceInterface& invoice)
 {
   QDomElement root = document.createElement("Destinatarios");
 
   for (const CompanyData& recipient : invoice.getRecipients())
-  {
-    const auto  cif         = recipient.cif;
-    const auto  name        = recipient.name;
-    QDomElement recipientEl = document.createElement("IDDestinatario");
-    QDomElement cifEl       = document.createElement("NIF");
-    QDomElement nameEl      = document.createElement("ApellidosNombreRazonSocial");
-    QDomElement postalCodeEl= document.createElement("CodigoPostal");
-
-    cifEl.appendChild(document.createTextNode(cif));
-    nameEl.appendChild(document.createTextNode(name));
-    recipientEl.appendChild(cifEl);
-    recipientEl.appendChild(nameEl);
-    if (recipient.postalCode.length() > 0)
-    {
-      postalCodeEl.appendChild(document.createTextNode(recipient.postalCode));
-      recipientEl.appendChild(postalCodeEl);
-    }
-    root.appendChild(recipientEl);
-  }
+    root.appendChild(generateRecipientXml(document, recipient));
   return root;
 }
 

@@ -6,6 +6,7 @@
 #include "ticketbai-qt/tbaidocument.h"
 #include "ticketbai-qt/tbaisignprocess.h"
 #include "ticketbai-qt/invoiceuploaddocument.h"
+#include "ticketbai-qt/querydocument.h"
 #include <qcurl.h>
 #include <iostream>
 
@@ -22,9 +23,6 @@ const CompanyData CompanyData::self{
   "e@mail.com"
 };
 
-extern QString testCif;
-extern QString testCompanyName;
-
 void LROESubmitProcessTest::initTestCase()
 {
   QVERIFY(TbaiCertificate::prepare());
@@ -35,7 +33,7 @@ void LROESubmitProcessTest::cleanupTestCase()
   TbaiCertificate::cleanup();
 }
 
-static void logLROEResponse(const LROESubmitProcess::LROEResponse& response)
+static void logLROEResponse(const LROESubmitProcess::Response& response)
 {
   qDebug() << "LROE Remote Server responded with:";
   qDebug() << "  Status: " << response.status;
@@ -49,13 +47,12 @@ static void logLROEResponse(const LROESubmitProcess::LROEResponse& response)
 
 void LROESubmitProcessTest::canSubmitExampleDocument()
 {
-  LROESubmitProcess               lroe;
-  LROEDocument                    document(LROEDocument::Model140, LROEDocument::AddOperation);
-  LROESubmitProcess::LROEResponse response;
+  CompanyData testEmitter{"5YD5J4IYKM7QJJNDKVAPTFTF6A6QLU", "", "", "79732487C", "", "", "", ""};
+  LROESubmitProcess           lroe(testEmitter);
+  LROEDocument                document(LROEDocument::Model140, LROEDocument::AddOperation);
+  LROESubmitProcess::Response response;
   QNetworkReply* reply;
 
-  testCif = "79732487C";
-  testCompanyName = "5YD5J4IYKM7QJJNDKVAPTFTF6A6QLU";
   document.setDocumentType(1, 1);
   document.setActivityYear(2022);
   QVERIFY(document.loadFromFile(qgetenv("TBAI_EXAMPLES_PATH") + "/Ejemplo_1_LROE_PF_140_IngresosConFacturaConSG_79732487C.xml"));
@@ -92,16 +89,14 @@ public:
 
 void LROESubmitProcessTest::canSubmitInvoice()
 {
-  LROESubmitProcess               lroe;
-  InvoiceUploadDocument           document(LROEDocument::Model240, LROEDocument::AddOperation);
-  TbaiSignProcess                 tbai_sign;
-  LROESubmitProcess::LROEResponse response;
+  LROESubmitProcess           lroe;
+  InvoiceUploadDocument       document(LROEDocument::Model240, LROEDocument::AddOperation);
+  TbaiSignProcess             tbai_sign;
+  LROESubmitProcess::Response response;
   QString invoiceXml;
   InvoiceTest invoice;
   QNetworkReply* reply;
 
-  testCif = CompanyData::self.cif;
-  testCompanyName = CompanyData::self.name;
   document.setActivityYear(2022);
   document.appendInvoiceFromFile(qgetenv("TBAI_EXAMPLES_PATH") + "/invoice-upload.xml");
   //std::cout << "DEBUG TBAI:\n" << invoiceXml.toStdString() << "\nEND DEBUG TBAI DOC" << std::endl;
@@ -114,16 +109,14 @@ void LROESubmitProcessTest::canSubmitInvoice()
 
 void LROESubmitProcessTest::canGenerateInvoices()
 {
-  LROESubmitProcess               lroe;
-  InvoiceUploadDocument           document(LROEDocument::Model240, LROEDocument::AddOperation);
-  TbaiSignProcess                 tbai_sign;
-  LROESubmitProcess::LROEResponse response;
+  LROESubmitProcess           lroe;
+  InvoiceUploadDocument       document(LROEDocument::Model240, LROEDocument::AddOperation);
+  TbaiSignProcess             tbai_sign;
+  LROESubmitProcess::Response response;
   QString invoiceXml;
   InvoiceTest invoice;
   QNetworkReply* reply;
 
-  testCif = CompanyData::self.cif;
-  testCompanyName = CompanyData::self.name;
   invoice.number = "1";
   invoice.name = "Parrot sale";
   QObject::connect(&tbai_sign, &TbaiSignProcess::generatedXml, [&invoiceXml](QString xml)

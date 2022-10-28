@@ -1,31 +1,21 @@
 #ifndef  LROESUBMITPROCESS_H
 # define LROESUBMITPROCESS_H
 
-# include <QObject>
-# include <QProcess>
-# include <QTemporaryFile>
 # include <QStringList>
 # include <QVector>
 # include <QNetworkReply>
-# include "lroedocument.h"
+# include "lroeclient.h"
 
 class LROESubmitProcessTest;
 
-class LROESubmitProcess : public QObject
+class LROESubmitProcess : public LROEClient
 {
   Q_OBJECT
   friend class LROESubmitProcessTest;
 public:
   static const QString dumpPath;
 
-  struct LROEResponse
-  {
-    unsigned int status;
-    QByteArray   id, type, code;
-    QString      message;
-    QDomDocument document;
-  };
-
+  explicit LROESubmitProcess(const CompanyData& emitter, QObject* parent = nullptr);
   explicit LROESubmitProcess(QObject *parent = nullptr);
 
   static QString getDumpPath();
@@ -41,15 +31,9 @@ private:
   void           breakDownQueryFor(const QStringList& tbaiFiles);
   void           makeQueryFor(const QStringList& tbaiFiles);
   void           scheduleNextQuery();
-  QNetworkReply* sendDocument(const LROEDocument&);
-  QJsonDocument  jsonHeaderFor(const LROEDocument&);
-  LROEResponse   parseResponse(QNetworkReply*);
-  void           onResponseReceived(const LROEResponse&);
+  void           onResponseReceived(const Response&);
 
-  static const QByteArray customHeaderPrefix;
-  QVector<QStringList>    groups;
-  QTemporaryFile          xmlFile;
-  QProcess                gunzip;
+  QVector<QStringList> groups;
 };
 
 #endif // LROESUBMITPROCESS_H

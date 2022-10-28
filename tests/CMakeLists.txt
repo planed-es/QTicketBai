@@ -6,6 +6,7 @@ include_directories(..)
 
 add_executable(lroesubmitprocess tst_lroesubmitprocess.cpp
   ../ticketbai-qt/lroesubmitprocess.cpp
+  ../ticketbai-qt/lroeclient.cpp
   ../ticketbai-qt/lroedocument.cpp
   ../ticketbai-qt/tbaicertificate.cpp
   ../ticketbai-qt/tbaidocument.cpp

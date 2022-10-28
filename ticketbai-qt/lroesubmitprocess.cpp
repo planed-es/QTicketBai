@@ -10,20 +10,15 @@
 #include "companydata.h"
 #define MAX_INVOICES_PER_LROE 1000
 
-const QByteArray LROESubmitProcess::customHeaderPrefix = "eus-bizkaia-n3-";
 const QString    LROESubmitProcess::dumpPath = LROESubmitProcess::getDumpPath();
-static const QByteArray productionHostname  = "https://sarrerak.bizkaia.eus";
-static const QByteArray developmentHostname = "https://pruesarrerak.bizkaia.eus";
-QString testCif("A99805061");
-QString testCompanyName("TestCompany");
 
 static bool productionEnv() { return qgetenv("LROE_ENVIRONMENT") == "production"; }
 
-static const QByteArray& lroeHostname() { return productionEnv() ? productionHostname : developmentHostname; }
-static QString getCompanyName() { return productionEnv() ? CompanyData::self.name : testCompanyName; }
-static QString getCif()         { return productionEnv() ? CompanyData::self.cif : testCif; }
+LROESubmitProcess::LROESubmitProcess(const CompanyData& emitter, QObject *parent) : LROEClient(emitter, parent)
+{
+}
 
-LROESubmitProcess::LROESubmitProcess(QObject *parent) : QObject(parent)
+LROESubmitProcess::LROESubmitProcess(QObject *parent) : LROEClient(parent)
 {
 }
 
@@ -71,14 +66,6 @@ void LROESubmitProcess::scheduleNextQuery()
     emit finished();
 }
 
-static void onFinished(QNetworkReply* reply, std::function<void()> callback)
-{
-  if (reply->isFinished())
-    callback();
-  else
-    QObject::connect(reply, &QNetworkReply::finished, callback);
-}
-
 static void backupDocumentForDebugPurposes(const LROEDocument& document)
 {
   QFile tmpfile("/tmp/lroe-tmp.xml");
@@ -98,112 +85,20 @@ void LROESubmitProcess::makeQueryFor(const QStringList &tbaiFiles)
   for (const QString& path : tbaiFiles)
     document.appendInvoiceFromFile(dumpPath + '/' + path);
   backupDocumentForDebugPurposes(document);
-  reply = sendDocument(document);
-  onFinished(reply, [this, reply]()
-  {
-    LROEResponse data = parseResponse(reply);
-
-    if (data.status == 200)
-      onResponseReceived(data);
-    else
-    {
-      qDebug() << "QNetworkReply error message:" << reply->errorString();
-      onResponseReceived(data);
-    }
-    reply->deleteLater();
-  });
+  submit(document, std::bind(&LROESubmitProcess::onResponseReceived, this, std::placeholders::_1));
 }
 
-void LROESubmitProcess::onResponseReceived(const LROEResponse& response)
+void LROESubmitProcess::onResponseReceived(const Response& response)
 {
   // TODO
-  qDebug() << "LROE Remote Server responded with:";
-  qDebug() << "  Status: " << response.status;
-  qDebug() << "  Type:"    << response.type;
-  qDebug() << "  Code:"    << response.code;
-  qDebug() << "  Msg :"    << response.message;
-  qDebug() << "  Id  :"    << response.id;
+  qDebug() << "LROE remote server responded with:" << response;
   qDebug() << "  Document:";
   qDebug() << response.document.toByteArray(2) << "\n";
   // END TODO
-  scheduleNextQuery();
-}
-
-LROESubmitProcess::LROEResponse LROESubmitProcess::parseResponse(QNetworkReply* reply)
-{
-  LROEResponse data;
-  QByteArray   body;
-
-  data.status  = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toUInt();
-  data.type    = reply->rawHeader(customHeaderPrefix + "tipo-respuesta");
-  data.code    = reply->rawHeader(customHeaderPrefix + "codigo-respuesta");
-  data.message = QString::fromUtf8(reply->rawHeader(customHeaderPrefix + "mensaje-respuesta"));
-  data.id      = reply->rawHeader(customHeaderPrefix + "identificativo");
-  if (reply->header(QNetworkRequest::ContentTypeHeader) == "application/xml") // according to the documentation, these dimwits might've misspelled application/xml as application/XML.
-  {
-    QByteArray rawBody = reply->readAll();
-
-    if (reply->rawHeader("Content-Encoding") == "gzip")
-      QCompressor::gzipDecompress(reply->readAll(), body);
-    else
-      body = rawBody;
-    data.document.setContent(body);
-  }
-  return data;
-}
-
-QJsonDocument LROESubmitProcess::jsonHeaderFor(const LROEDocument& document)
-{
-  QJsonObject jsonHeader, jsonEmitter, jsonDrs;
-  QByteArray  cif       = getCif().toUtf8();
-  QByteArray  name      = getCompanyName().toUtf8();
-  QByteArray  firstname = qgetenv("EUS_BIZKAIA_FIRSTNAME");
-  QByteArray  lastname  = qgetenv("EUS_BIZKAIA_LASTNAME");
-
-  jsonDrs.insert("mode", QString::number(static_cast<int>(document.modelType())));
-  jsonDrs.insert("ejer", QString::number(document.activityYear()));
-  jsonEmitter.insert("nif", QJsonValue::fromVariant(cif));
-  jsonEmitter.insert("nrs", QJsonValue::fromVariant(name));
-  if (!firstname.isEmpty())
-    jsonEmitter.insert("ap1", QJsonValue::fromVariant(firstname));
-  if (!lastname.isEmpty())
-    jsonEmitter.insert("ap2", QJsonValue::fromVariant(lastname));
-  jsonHeader.insert("con", "LROE"); // Concepto
-  jsonHeader.insert("apa", document.documentTypeString()); // Apartado
-  jsonHeader.insert("inte", jsonEmitter); // Interesado
-  jsonHeader.insert("drs",  jsonDrs); // Datos relevantes
-  return QJsonDocument(jsonHeader);
-}
-
-QNetworkReply* LROESubmitProcess::sendDocument(const LROEDocument& document)
-{
-  QNetworkRequest   request;
-  QSslConfiguration sslConfiguration;
-  QUrl              endpoint(lroeHostname() + "/N3B4000M/aurkezpena");
-  QJsonDocument     jsonHeader = jsonHeaderFor(document);
-  QByteArray        compressedData;
-  QCurl             curl;
-
-  QByteArray data = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>";
-  data += document.toString().toUtf8();
-  QCompressor::gzipCompress(data, compressedData);
-
-  QFile file("Ejemplo_1_LROE_PF_140_IngresosConFacturaConSG_79732487C.xml.gz");
-  if (file.open(QIODevice::ReadOnly))
-    compressedData = file.readAll();
-
-  request.setUrl(endpoint);
-  request.setHeader(QNetworkRequest::ContentTypeHeader,   "application/octet-stream"); // Yes, technically incorrect. It's what the API expects.
-  request.setHeader(QNetworkRequest::ContentLengthHeader, compressedData.length());
-  request.setRawHeader("Content-Encoding",  "gzip");
-  request.setRawHeader("Accepted-Encoding", "gzip");
-  request.setRawHeader(customHeaderPrefix + "version",      LROEDocument::apiVersion);
-  request.setRawHeader(customHeaderPrefix + "content-type", "application/xml");
-  request.setRawHeader(customHeaderPrefix + "data",         jsonHeader.toJson(QJsonDocument::Compact));
-  curl.setCertificate(TbaiCertificate::pemPath(), QSsl::Pem);
-  curl.setSslKey(TbaiCertificate::keyPath(), QSsl::Rsa);
-  curl.setVerbosityLevel(7);
-  return curl.send(request, compressedData);
+  if (response.status == 200)
+    scheduleNextQuery();
+  else
+    emit finished();
 }
 
 void LROESubmitProcess::breakDownQueryFor(const QStringList& tbaiFiles)
