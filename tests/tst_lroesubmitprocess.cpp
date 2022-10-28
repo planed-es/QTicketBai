@@ -5,7 +5,7 @@
 #include "ticketbai-qt/invoiceinterface.h"
 #include "ticketbai-qt/tbaidocument.h"
 #include "ticketbai-qt/tbaisignprocess.h"
-#include "ticketbai-qt/invoiceuploaddocument.h"
+#include "ticketbai-qt/uploaddocument.h"
 #include "ticketbai-qt/querydocument.h"
 #include <qcurl.h>
 #include <iostream>
@@ -33,18 +33,6 @@ void LROESubmitProcessTest::cleanupTestCase()
   TbaiCertificate::cleanup();
 }
 
-static void logLROEResponse(const LROESubmitProcess::Response& response)
-{
-  qDebug() << "LROE Remote Server responded with:";
-  qDebug() << "  Status: " << response.status;
-  qDebug() << "  Type:"    << response.type;
-  qDebug() << "  Code:"    << response.code;
-  qDebug() << "  Msg :"    << response.message;
-  qDebug() << "  Id  :"    << response.id;
-  qDebug() << "  Document:";
-  qDebug() << response.document.toByteArray(2) << "\n";
-}
-
 void LROESubmitProcessTest::canSubmitExampleDocument()
 {
   CompanyData testEmitter{"5YD5J4IYKM7QJJNDKVAPTFTF6A6QLU", "", "", "79732487C", "", "", "", ""};
@@ -58,7 +46,7 @@ void LROESubmitProcessTest::canSubmitExampleDocument()
   QVERIFY(document.loadFromFile(qgetenv("TBAI_EXAMPLES_PATH") + "/Ejemplo_1_LROE_PF_140_IngresosConFacturaConSG_79732487C.xml"));
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
-  logLROEResponse(response);
+  qDebug() << response;
   QCOMPARE(response.status, 200);
 }
 
@@ -90,7 +78,7 @@ public:
 void LROESubmitProcessTest::canSubmitInvoice()
 {
   LROESubmitProcess           lroe;
-  InvoiceUploadDocument       document(LROEDocument::Model240, LROEDocument::AddOperation);
+  TbaiUploadDocument       document(LROEDocument::Model240, LROEDocument::AddOperation);
   TbaiSignProcess             tbai_sign;
   LROESubmitProcess::Response response;
   QString invoiceXml;
@@ -103,14 +91,14 @@ void LROESubmitProcessTest::canSubmitInvoice()
   //std::cout << "DEBUG DOC:\n" << document.toString(2).toStdString() << "\nEND DEBUG DOC" << std::endl;
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
-  logLROEResponse(response);
+  qDebug() << response;
   QCOMPARE(response.status, 200);
 }
 
 void LROESubmitProcessTest::canGenerateInvoices()
 {
   LROESubmitProcess           lroe;
-  InvoiceUploadDocument       document(LROEDocument::Model240, LROEDocument::AddOperation);
+  TbaiUploadDocument       document(LROEDocument::Model240, LROEDocument::AddOperation);
   TbaiSignProcess             tbai_sign;
   LROESubmitProcess::Response response;
   QString invoiceXml;
@@ -131,7 +119,7 @@ void LROESubmitProcessTest::canGenerateInvoices()
   //std::cout << "DEBUG DOC:\n" << document.toString(2).toStdString() << "\nEND DEBUG DOC" << std::endl;
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
-  logLROEResponse(response);
+  qDebug() << response;
   QCOMPARE(response.status, 200);
 }
 
@@ -146,5 +134,6 @@ void LROESubmitProcessTest::canQueryInvoices()
   std::cout << "DEBUG DOC:\n" << document.toString(2).toStdString() << std::endl;
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
+  qDebug() << response;
   QCOMPARE(response.status, 200);
 }

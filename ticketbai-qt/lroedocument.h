@@ -34,11 +34,12 @@ public:
   int activityYear() const { return year; }
 
 protected:
-  ModelType   model;
-  QDomElement root;
-  QDomElement typeEl, subtypeEl, periodEl, operationEl, emitterEl;
-  int         documentType, documentSubtype;
-  int         year;
+  ModelType     model;
+  OperationType operation;
+  QDomElement   root;
+  QDomElement   typeEl, subtypeEl, periodEl, operationEl, emitterEl;
+  int           documentType, documentSubtype;
+  int           year;
 };
 
 #endif // LROEDOCUMENT_H

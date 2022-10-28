@@ -1,6 +1,6 @@
 #include "lroesubmitprocess.h"
 #include "tbaicertificate.h"
-#include "invoiceuploaddocument.h"
+#include "uploaddocument.h"
 #include <QDir>
 #include <QJsonObject>
 #include <QJsonDocument>
@@ -77,7 +77,7 @@ static void backupDocumentForDebugPurposes(const LROEDocument& document)
 
 void LROESubmitProcess::makeQueryFor(const QStringList &tbaiFiles)
 {
-  InvoiceUploadDocument document(LROEDocument::Model240, LROEDocument::AddOperation);
+  TbaiUploadDocument document(LROEDocument::Model240, LROEDocument::AddOperation);
   QNetworkReply* reply;
 
   document.setActivityYear(2022);

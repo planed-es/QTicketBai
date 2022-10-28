@@ -52,6 +52,7 @@ LROEDocument::LROEDocument(ModelType modelType, OperationType operationType)
   auto xmlns = LROEXmlns.find({modelType, operationType});
 
   model       = modelType;
+  operation   = operationType;
   root        = createElement(xmlScope + ':' + LROETagTypes[modelType]);
   typeEl      = createElement("Capitulo");
   subtypeEl   = createElement("Subcapitulo");
