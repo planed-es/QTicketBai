@@ -25,8 +25,12 @@ public:
   static void cleanup();
   static QString pemPath();
   static QString keyPath();
+  static QString issuerName();
+  static QString serialNumber();
 
 private:
+  static bool preparePemCertificates();
+  static bool extractMetadata();
   static QString pathWithExtension(const QString& extension);
 };
 

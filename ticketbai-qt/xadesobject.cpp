@@ -70,7 +70,8 @@ QDomElement TbaiXadesObject::generateSigningCertificate()
   certDigestMethodEl.setAttribute("Algorithm", "http://www.w3.org/2001/04/xmlenc#sha512");
   certDigestEl.appendChild(certDigestMethodEl);
   certDigestEl.appendChild(certDigestValueEl);
-  issuerNameEl.appendChild(context.document.createTextNode(TbaiCertificate::alias()));
+  issuerNameEl.appendChild(context.document.createTextNode(TbaiCertificate::issuerName()));
+  serialNumberEl.appendChild(context.document.createTextNode(TbaiCertificate::serialNumber()));
   issuerSerialEl.appendChild(issuerNameEl);
   issuerSerialEl.appendChild(serialNumberEl);
   certEl.appendChild(certDigestEl);
