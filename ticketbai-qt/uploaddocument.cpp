@@ -37,9 +37,8 @@ void TbaiUploadDocument::appendInvoice(const QString& invoiceXml)
 {
   QDomElement invoiceEl = createElement(itemTagFor(model));
   QDomElement tbaiEl    = createElement(tbaiTagFor(operation));
-  const QByteArray header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 
-  tbaiEl.appendChild(createTextNode((header + invoiceXml).toUtf8().toBase64()));
+  tbaiEl.appendChild(createTextNode(invoiceXml.toUtf8().toBase64()));
   invoiceEl.appendChild(tbaiEl);
   incomeListEl.appendChild(invoiceEl);
   if (model == Model140 && operation == AddOperation)

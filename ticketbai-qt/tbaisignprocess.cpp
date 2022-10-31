@@ -4,16 +4,10 @@
 #include "tbaisignprocess.h"
 #include "tbaidocument.h"
 #include "tbaicertificate.h"
+#include "xadesobject.h"
+#include "xmlsec-qt/xmlsign.h"
 #include <iostream>
 #include <QDebug>
-
-static QString findAutofirma()
-{
-  QString exeName = "autofirma.jar";
-  QString path = QStandardPaths::findExecutable(exeName);
-
-  return path.isEmpty() ? (qgetenv("AUTOFIRMA_PATH") + '/' + exeName) : path;
-}
 
 TbaiSignProcess::TbaiSignProcess(QObject *parent) : QObject(parent)
 {
@@ -35,10 +29,6 @@ bool TbaiSignProcess::checkSettings()
   }
 
   std::cerr << "Checking configuration for QTicketBAI:" << std::endl;
-  std::cerr << "- Looking for java runtime:\t";
-  TBAI_FILE_CHECKER(QStandardPaths::findExecutable("java"))
-  std::cerr << "- Looking for autofirma.jar:\t";
-  TBAI_FILE_CHECKER(findAutofirma())
   std::cerr << "- Looking for certificate:\t";
   TBAI_FILE_CHECKER(TbaiCertificate::path())
   std::cerr << "- Certificate password ?\t" << (TbaiCertificate::password().isEmpty() ? "No" : "Yes") << std::endl;
@@ -50,87 +40,78 @@ bool TbaiSignProcess::checkSettings()
 
 void TbaiSignProcess::sign(const TbaiInvoiceInterface& invoice)
 {
-  qDebug() << "TbaiSignProcess";
+  bool success;
+  QXmlSign signer;
+  QXmlSecCertificate certificate;
+
   document.createFrom(invoice);
-  if (inputFile.open() && outputFile.open())
+  signer.withSignatureId("Signature")
+        .useNamespace(TbaiDocument::signatureNamespace())
+        .useDocument(document);
+  certificate.setFormat(QXmlSecCertificate::Pkcs12);
+  certificate.setFilepath(TbaiCertificate::path());
+  certificate.setPassword(TbaiCertificate::password());
+  certificate.setName("QTicketBai/pkcs12");
+
+
+  QString keyInfoId              = signer.signatureContext().tagId("KeyInfo");
+  QString signatureSignInfoRefId = signer.signatureContext().tagId("Reference");
+
+  /*
+   * <Object/>
+   */
+  TbaiXadesObject xadesObject(signer.signatureContext());
+
+  xadesObject.addDataObjectFormat(
+    XadesObjectDataObjectFormat(signatureSignInfoRefId)
+      .withIdentifierQualifier("OIDAsURN")
+      .withIdentifier("urn:oid:1.2.840.10003.5.109.10")
+      .withMimetype("text/xml")
+  );
+  signer.withObject(xadesObject.generate());
+
+  /*
+   * <SignInfo/>
+   */
+  signer.useSignInfo(QXmlSignInfo()
+    .addReference(QXmlSignReference()
+      .withId(signatureSignInfoRefId)
+      .withType(QUrl("http://www.w3.org/2000/09/xmldsig#Object"))
+      .withUri("")
+      .useAlgorithm(QUrl("http://www.w3.org/2001/04/xmlenc#sha512"))
+      //.addTransform(QUrl("http://www.w3.org/TR/2001/REC-xml-c14n-20010315"))
+      .addTransform(QUrl("http://www.w3.org/2000/09/xmldsig#enveloped-signature"))
+      .addTransform(QUrl("http://www.w3.org/TR/1999/REC-xpath-19991116"))
+    )
+    .addReference(QXmlSignReference()
+      .withUri('#' + xadesObject.signedPropertiesId())
+      .withType(QUrl("http://uri.etsi.org/01903#SignedProperties"))
+      .useAlgorithm(QUrl("http://www.w3.org/2001/04/xmlenc#sha512"))
+    )
+    .addReference(QXmlSignReference()
+      .withUri('#' + keyInfoId)
+      .useAlgorithm(QUrl("http://www.w3.org/2001/04/xmlenc#sha512"))
+    )
+  );
+
+  /*
+   * <KeyInfo/>
+   */
+  signer.useKeyInfo(QXmlSignKeyInfo()
+    .withId(keyInfoId)
+    .withKeyValue()
+    .withX509Data()
+  );
+
+  /*
+   * Signing
+   */
+  if (signer.sign(certificate))
   {
-    autofirma = new QProcess(this);
-    connect(autofirma,
-      QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-      this,
-      &TbaiSignProcess::onAutofirmaDone
-    );
-    connect(autofirma, &QProcess::errorOccurred, this, &TbaiSignProcess::onAutofirmaFailed);
-    inputFile.write(document.toByteArray());
-    inputFile.close();
-    outputFile.close();
-    launchAutofirma();
+    document.loadFrom(signer.toString().toUtf8());
+    emit generatedSignature(document.getSignature());
+    emit generatedXml(signer.toString().toUtf8());
   }
   else
-    emit failed("could not open temporary files");
-}
-
-void TbaiSignProcess::launchAutofirma()
-{
-  QString javaPath            = QStandardPaths::findExecutable("java");
-  QString autofirmaPath       = findAutofirma();
-  QStringList params;
-
-  params << "-jar" << autofirmaPath << "sign"
-         << "-format"   << "xades"
-         << "-i"        << inputFile.fileName()
-         << "-o"        << outputFile.fileName()
-         << "-store"    << ("pkcs12:" + TbaiCertificate::path())
-         << "-alias"    << TbaiCertificate::alias();
-  if (!TbaiCertificate::password().isEmpty())
-    params << "-password" << TbaiCertificate::password();
-  qDebug() << "TbaiSignProcess::launchAutofirma" << javaPath << params;
-  autofirma->start(javaPath, params, QIODevice::ReadOnly);
-}
-
-bool TbaiSignProcess::wait()
-{
-  autofirma->waitForStarted();
-  autofirma->waitForFinished();
-  return autofirma->state() == QProcess::NotRunning && autofirma->exitCode() == 0;
-}
-
-void TbaiSignProcess::onAutofirmaFailed(QProcess::ProcessError error)
-{
-  qDebug() << "TbaiSignProcess::onAutofirmaFailed" << error;
-  switch (error)
-  {
-  case QProcess::FailedToStart:
-    emit failed("autofirma process failed to start");
-    break ;
-  default:
-    emit failed("autofirma process failed for unknown reasons");
-    break ;
-  }
-}
-
-void TbaiSignProcess::onAutofirmaDone(int code, QProcess::ExitStatus)
-{
-  qDebug() << "TbaiSignProcess::onAutofirmaDone" << code;
-  if (code == 0)
-  {
-    QDomDocument signatureDocument;
-
-    outputFile.open();
-    signatureDocument.setContent(outputFile.readAll());
-    outputFile.close();
-    generateXml(signatureDocument);
-  }
-  else
-    emit failed("autofirma.jar returned with satus " + QString::number(code));
-}
-
-void TbaiSignProcess::generateXml(const QDomDocument &xmlSignature)
-{
-  QDomElement signatureEl = xmlSignature.firstChildElement("ds:Signature");
-
-  document.appendSignature(signatureEl);
-  emit generatedSignature(document.getSignature());
-  emit generatedDocument(document);
-  emit generatedXml(document.toByteArray(2));
+    emit failed("QXmlSign failed to sign the document");
 }

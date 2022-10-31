@@ -13,6 +13,7 @@ add_executable(lroesubmitprocess tst_lroesubmitprocess.cpp
   ../ticketbai-qt/uploaddocument.cpp
   ../ticketbai-qt/tbaisignprocess.cpp
   ../ticketbai-qt/qcompressor.cpp
+  ../ticketbai-qt/xadesobject.cpp
 )
 add_test(NAME lroesubmitprocess COMMAND lroesubmitprocess)
 target_link_libraries(lroesubmitprocess PRIVATE
@@ -22,4 +23,6 @@ target_link_libraries(lroesubmitprocess PRIVATE
   Qt${QT_VERSION_MAJOR}::Xml
   QtCurl
   z
-  curl)
+  curl
+  xmlsec-qt
+  ${XMLSEC_LIBRARIES})

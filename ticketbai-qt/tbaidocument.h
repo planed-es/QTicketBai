@@ -20,6 +20,7 @@ public:
   QByteArray     getSignature() const;
 
   static QString getFileNameFor(const TbaiInvoiceInterface&);
+  static QString signatureNamespace();
 
 private:
   QDomElement root;

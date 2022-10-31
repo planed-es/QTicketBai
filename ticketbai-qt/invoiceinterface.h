@@ -30,7 +30,8 @@ public:
     CorrectionArt80_4_Type,
     CorrectionArt80_6_Type,
     CorrectionOthers_Type,
-    SimplifiedCorrectionType
+    SimplifiedCorrectionType,
+    CancelType
   };
 
   virtual TbaiInvoiceInterface* getPreviousInvoice() const = 0;

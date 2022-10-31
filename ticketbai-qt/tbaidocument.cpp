@@ -338,12 +338,12 @@ void TbaiDocument::appendSignature(const QDomElement& signatureEl)
 
 bool TbaiDocument::isSigned() const
 {
-  return !root.elementsByTagName("ds:Signature").isEmpty();
+  return !root.elementsByTagName(signatureNamespace() + ":Signature").isEmpty();
 }
 
 QByteArray TbaiDocument::getSignature() const
 {
-  QDomNodeList matches = root.elementsByTagName("ds:SignatureValue");
+  QDomNodeList matches = root.elementsByTagName(signatureNamespace() + ":SignatureValue");
   QDomNode signatureNode = matches.item(0);
   QString signature = signatureNode.lastChild().toText().data();
 
@@ -377,4 +377,9 @@ QString TbaiDocument::getFileNameFor(const TbaiInvoiceInterface& invoice)
   else
     title = QUrl::toPercentEncoding(title, " ");
   return time + '_' + title + ".xml";
+}
+
+QString TbaiDocument::signatureNamespace()
+{
+  return "dsig";
 }

@@ -19,26 +19,15 @@ public:
   static bool checkSettings();
 
   void sign(const TbaiInvoiceInterface&);
-  bool wait();
 
 signals:
   void generatedSignature(QByteArray);
-  void generatedDocument(TbaiDocument tbaiDocument);
   void generatedXml(QByteArray);
   void failed(QString error);
   void finished();
 
-private slots:
-  void onAutofirmaDone(int exitStatus, QProcess::ExitStatus);
-  void onAutofirmaFailed(QProcess::ProcessError);
-
 private:
-  void launchAutofirma();
-  void generateXml(const QDomDocument& xmlSignature);
-
   TbaiDocument   document;
-  QProcess*      autofirma;
-  QTemporaryFile inputFile, outputFile;
 };
 
 #endif // TBAISIGNPROCESS_H

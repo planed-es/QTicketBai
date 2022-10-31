@@ -7,6 +7,8 @@
 #include "ticketbai-qt/tbaisignprocess.h"
 #include "ticketbai-qt/uploaddocument.h"
 #include "ticketbai-qt/querydocument.h"
+#include "xmlsec-qt/xmlsec.h"
+#include "xmlsec-qt/xmlsign.h"
 #include <qcurl.h>
 #include <iostream>
 
@@ -23,13 +25,17 @@ const CompanyData CompanyData::self{
   "e@mail.com"
 };
 
+QXmlSec* xmlsec;
+
 void LROESubmitProcessTest::initTestCase()
 {
+  xmlsec = new QXmlSec();
   QVERIFY(TbaiCertificate::prepare());
 }
 
 void LROESubmitProcessTest::cleanupTestCase()
 {
+  delete xmlsec;
   TbaiCertificate::cleanup();
 }
 
@@ -70,7 +76,7 @@ public:
   Recipients        getRecipients() const override
   {
     return {
-      CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", "0505050505", "0606060606", "12345", "e@ma.il"}
+      CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", "A12345678", "0505050505", "0606060606", "12345", "e@ma.il"}
     };
   }
 };
@@ -92,13 +98,14 @@ void LROESubmitProcessTest::canSubmitInvoice()
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   qDebug() << response;
+  std::cout << response.document.toString(2).toStdString() << std::endl;
   QCOMPARE(response.status, 200);
 }
 
 void LROESubmitProcessTest::canGenerateInvoices()
 {
   LROESubmitProcess           lroe;
-  TbaiUploadDocument       document(LROEDocument::Model240, LROEDocument::AddOperation);
+  TbaiUploadDocument          document(LROEDocument::Model240);
   TbaiSignProcess             tbai_sign;
   LROESubmitProcess::Response response;
   QString invoiceXml;
@@ -107,12 +114,17 @@ void LROESubmitProcessTest::canGenerateInvoices()
 
   invoice.number = "1";
   invoice.name = "Parrot sale";
-  QObject::connect(&tbai_sign, &TbaiSignProcess::generatedXml, [&invoiceXml](QString xml)
+  QObject::connect(&tbai_sign, &TbaiSignProcess::generatedSignature, [](QByteArray signature)
   {
-    invoiceXml = xml;
+    qDebug() << "Generated signature" << signature;
+  });
+  QObject::connect(&tbai_sign, &TbaiSignProcess::generatedXml, [&invoiceXml](QByteArray generatedXml)
+  {
+    invoiceXml = generatedXml;
+    std::cout << "InvoiceXML = " << invoiceXml.toStdString() << std::endl;
   });
   tbai_sign.sign(invoice);
-  QVERIFY(tbai_sign.wait());
+  QVERIFY(invoiceXml.length() > 0);
   document.setActivityYear(2022);
   document.appendInvoice(invoiceXml);
   //std::cout << "DEBUG TBAI:\n" << invoiceXml.toStdString() << "\nEND DEBUG TBAI DOC" << std::endl;
@@ -120,6 +132,7 @@ void LROESubmitProcessTest::canGenerateInvoices()
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   qDebug() << response;
+  std::cout << response.document.toString(2).toStdString() << std::endl;
   QCOMPARE(response.status, 200);
 }
 

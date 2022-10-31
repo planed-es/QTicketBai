@@ -14,10 +14,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ZLIB REQUIRED)
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Network Xml)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network Xml)
+find_package(PkgConfig)
+pkg_check_modules(XMLSEC REQUIRED xmlsec1-openssl>=1.0.0)
 
 include_directories(${ZLIB_INCLUDE_DIRS})
-include_directories(/home/plaristote/Work/MercaBack/vendor/QtCurl)
-link_directories(/home/plaristote/Work/MercaBack/build/vendor/QtCurl)
+include_directories(${XMLSEC_INCLUDE_DIRS} /usr/include/xmlsec1)
 
 file(GLOB headers ticketbai-qt/*.h)
 file(GLOB sources ticketbai-qt/*.cpp)
@@ -32,7 +33,9 @@ target_link_libraries(ticketbai-qt PRIVATE
   Qt${QT_VERSION_MAJOR}::Network
   Qt${QT_VERSION_MAJOR}::Xml
   QtCurl
-  z)
+  z
+  xmlsec-qt
+  ${XMLSEC_LIBRARIES})
 
 if (BUILD_TESTS)
   add_subdirectory(tests)

@@ -100,7 +100,7 @@ LROEClient::Response LROEClient::parseResponse(QNetworkReply* reply)
   data.status  = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toUInt();
   data.type    = reply->rawHeader(customHeaderPrefix + "tipo-respuesta");
   data.code    = reply->rawHeader(customHeaderPrefix + "codigo-respuesta");
-  data.message = QString::fromUtf8(reply->rawHeader(customHeaderPrefix + "mensaje-respuesta"));
+  data.message = QString(reply->rawHeader(customHeaderPrefix + "mensaje-respuesta"));
   data.id      = reply->rawHeader(customHeaderPrefix + "identificativo");
   if (reply->header(QNetworkRequest::ContentTypeHeader).toString().startsWith("application/xml"))
   {
