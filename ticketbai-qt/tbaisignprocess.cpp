@@ -4,8 +4,8 @@
 #include "tbaisignprocess.h"
 #include "tbaidocument.h"
 #include "tbaicertificate.h"
-#include "xadesobject.h"
 #include "xmlsec-qt/xmlsign.h"
+#include "xmlsec-qt/xades/object.h"
 #include <iostream>
 #include <QDebug>
 
@@ -53,22 +53,39 @@ void TbaiSignProcess::sign(const TbaiInvoiceInterface& invoice)
   certificate.setPassword(TbaiCertificate::password());
   certificate.setName("QTicketBai/pkcs12");
 
-
   QString keyInfoId              = signer.signatureContext().tagId("KeyInfo");
   QString signatureSignInfoRefId = signer.signatureContext().tagId("Reference");
 
   /*
    * <Object/>
    */
-  TbaiXadesObject xadesObject(signer.signatureContext());
+  QXadesObject xadesObject(signer.signatureContext());
+  QUrl specificationPdf("https://www.batuz.eus/fitxategiak/batuz/ticketbai/sinadura_elektronikoaren_zehaztapenak_especificaciones_de_la_firma_electronica_v1_0.pdf");
 
-  xadesObject.addDataObjectFormat(
-    XadesObjectDataObjectFormat(signatureSignInfoRefId)
+  xadesObject.useNamespace("xades");
+  xadesObject.signedProperties().signatureProperties()
+    .useSigningTime()
+    .signingCertificate()
+      .useDigestAlgorithm(QCryptographicHash::Sha512)
+      .useCertificate(TbaiCertificate::certificate);
+
+  xadesObject.signedProperties().signatureProperties()
+    .signaturePolicyIdentifier()
+      .useIdentifier(specificationPdf)
+      .useDigestAlgorithm(QCryptographicHash::Sha256)
+      .useDigestValue("Quzn98x3PMbSHwbUzaj5f5KOpiH0u8bvmwbbbNkO9Es")
+      .addQualifier(
+        QXadesSignaturePolicyQualifier().useUrl(specificationPdf)
+      );
+
+  xadesObject.signedProperties().addDataObjectFormat(
+    QXadesDataObjectFormat(signatureSignInfoRefId)
       .withIdentifierQualifier("OIDAsURN")
       .withIdentifier("urn:oid:1.2.840.10003.5.109.10")
       .withMimetype("text/xml")
   );
-  signer.withObject(xadesObject.generate());
+
+  signer.addObject(xadesObject.generate());
 
   /*
    * <SignInfo/>

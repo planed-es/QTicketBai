@@ -6,8 +6,8 @@
 #include <QSslKey>
 #include <QDebug>
 
-static QString certificateIssuer;
-static QString certificateSerialNumber;
+QSslCertificate TbaiCertificate::certificate;
+QSslKey         TbaiCertificate::sslKey;
 
 QString TbaiCertificate::alias()
 {
@@ -44,10 +44,22 @@ static QStringList certificate_prepare_params()
 
 bool TbaiCertificate::prepare()
 {
-  bool a = preparePemCertificates();
-  bool b = extractMetadata();
+  QFile pfxFile(TbaiCertificate::path());
 
-  return a && b;
+  if (pfxFile.open(QIODevice::ReadOnly))
+  {
+    bool a = preparePemCertificates();
+    bool b = QSslCertificate::importPkcs12(&pfxFile, &sslKey, &certificate, nullptr, TbaiCertificate::password().toUtf8());
+
+    if (!a)
+      qDebug() << "TbaiCertificate: failed to generate certificate and key in PEM format from" << TbaiCertificate::path();
+    if (!b)
+      qDebug() << "TbaiCertificate: QSslCertificate failed to import pkcs12 certificate" << TbaiCertificate::path();
+    return a && b;
+  }
+  else
+    qDebug() << "TbaiCertificate: cannot open file" << TbaiCertificate::path();
+  return false;
 }
 
 bool TbaiCertificate::preparePemCertificates()
@@ -72,50 +84,13 @@ bool TbaiCertificate::preparePemCertificates()
   return (pem_process.exitCode() + key_process.exitCode()) == 0;
 }
 
-bool TbaiCertificate::extractMetadata()
-{
-  QProcessEnvironment keytoolEnv;
-  QProcess keytoolProcess;
-  QStringList keytoolParams;
-  QString keytoolBin("keytool");
-
-  keytoolEnv.insert("LANG", "en_US.UTF-8");
-  keytoolProcess.setProcessEnvironment(keytoolEnv);
-  keytoolParams
-    << "-v" << "-list"
-    << "-storetype" << "pkcs12"
-    << "-keystore" << TbaiCertificate::path()
-    << "-storepass" << TbaiCertificate::password();
-  keytoolProcess.start(keytoolBin, keytoolParams);
-  keytoolProcess.waitForFinished();
-  for (const QByteArray& line : keytoolProcess.readAllStandardOutput().split('\n'))
-  {
-    qDebug() << line;
-    if (line.startsWith("Issuer: "))
-      certificateIssuer = line.sliced(8);
-    else if (line.startsWith("Serial number: "))
-      certificateSerialNumber = line.sliced(15);
-  }
-  if (certificateIssuer.length() == 0 || certificateSerialNumber.length() == 0)
-  {
-    qDebug() << "TbaiCertificate: failed to extract issuer name and serial number from" << TbaiCertificate::path();
-    return false;
-  }
-  return true;
-}
-
-QString TbaiCertificate::issuerName()
-{
-  return certificateIssuer;
-}
-
-QString TbaiCertificate::serialNumber()
-{
-  return certificateSerialNumber;
-}
-
 void TbaiCertificate::cleanup()
 {
   QFile::remove(TbaiCertificate::pathWithExtension(".pem"));
   QFile::remove(TbaiCertificate::pathWithExtension(".key"));
+}
+
+QByteArray TbaiCertificate::digest(QCryptographicHash::Algorithm algorithm)
+{
+  return certificate.digest(algorithm);
 }
