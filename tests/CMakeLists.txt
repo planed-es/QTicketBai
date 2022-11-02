@@ -4,6 +4,18 @@ find_package(ZLIB REQUIRED)
 enable_testing(true)
 include_directories(..)
 
+set(test_libraries 
+  Qt${QT_VERSION_MAJOR}::Test
+  Qt${QT_VERSION_MAJOR}::Core
+  Qt${QT_VERSION_MAJOR}::Network
+  Qt${QT_VERSION_MAJOR}::Xml
+  QtCurl
+  z
+  curl
+  ${XMLSECQT_LIBRARIES}
+  ${CRAILS_ENCRYPT_LIBRARIES}
+)
+
 add_executable(lroesubmitprocess tst_lroesubmitprocess.cpp
   ../ticketbai-qt/lroesubmitprocess.cpp
   ../ticketbai-qt/lroeclient.cpp
@@ -13,16 +25,11 @@ add_executable(lroesubmitprocess tst_lroesubmitprocess.cpp
   ../ticketbai-qt/uploaddocument.cpp
   ../ticketbai-qt/tbaisignprocess.cpp
   ../ticketbai-qt/qcompressor.cpp
-  ../ticketbai-qt/xadesobject.cpp
 )
 add_test(NAME lroesubmitprocess COMMAND lroesubmitprocess)
-target_link_libraries(lroesubmitprocess PRIVATE
-  Qt${QT_VERSION_MAJOR}::Test
-  Qt${QT_VERSION_MAJOR}::Core
-  Qt${QT_VERSION_MAJOR}::Network
-  Qt${QT_VERSION_MAJOR}::Xml
-  QtCurl
-  z
-  curl
-  xmlsec-qt
-  ${XMLSEC_LIBRARIES})
+target_link_libraries(lroesubmitprocess PRIVATE ${test_libraries})
+
+add_executable(tbaiinvoice tst_tbaiinvoice.cpp
+  ../ticketbai-qt/tbaiinvoice.cpp)
+add_test(NAME tbaiinvoice COMMAND tbaiinvoice)
+target_link_libraries(tbaiinvoice PRIVATE ${test_libraries})
