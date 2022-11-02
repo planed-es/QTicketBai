@@ -3,21 +3,22 @@
 
 # include <QDomDocument>
 # include <QDomElement>
+# include "ticketbai-qt_global.h"
 
 class TbaiInvoiceInterface;
 
-class TbaiDocument : public QDomDocument
+class TICKETBAIQT_EXPORT TbaiDocument : public QDomDocument
 {
 public:
   TbaiDocument();
 
-  void           createFrom(const TbaiInvoiceInterface&);
+  TbaiDocument&  createFrom(const TbaiInvoiceInterface&);
   bool           loadFromFile(const QString& path);
   bool           loadFrom(const QByteArray& xml);
   bool           loadFrom(const QString& xml) { return loadFrom(xml.toUtf8()); }
   void           appendSignature(const QDomElement&);
   bool           isSigned() const;
-  QByteArray     getSignature() const;
+  QByteArray     signature() const;
 
   static QString getFileNameFor(const TbaiInvoiceInterface&);
   static QString signatureNamespace();

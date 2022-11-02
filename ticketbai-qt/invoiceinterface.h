@@ -8,7 +8,8 @@
 class TbaiInvoiceInterface
 {
 public:
-  typedef QList<CompanyData> Recipients;
+  typedef CompanyData Recipient;
+  typedef QList<Recipient> Recipients;
 
   enum VatExemption
   {
@@ -34,21 +35,21 @@ public:
     CancelType
   };
 
-  virtual TbaiInvoiceInterface* getPreviousInvoice() const = 0;
-  virtual Type              getInvoiceType() const = 0;
-  virtual const QByteArray& getSignature() const = 0;
-  virtual const QDateTime&  getDate() const = 0;
-  virtual QByteArray        getSeries() const { return QByteArray(); };
-  virtual const QByteArray& getNumber() const = 0;
-  virtual const QString&    getName() const = 0;
-  virtual const QString&    getDescription() const = 0;
-  virtual double            getAmount() const = 0;
-  QByteArray                getFormattedAmount() const { return QByteArray::number(getAmount(), 'f', 2); }
-  virtual QByteArray        getTaxBaseAmount() const { return getFormattedAmount(); }
-  virtual Recipients        getRecipients() const = 0;
-  virtual VatExemption      getVatExemption() const { return NoVatExemption; }
-  virtual bool              isSubjectToVat() const { return getNotSubjectToVatReason().isEmpty(); }
-  virtual QString           getNotSubjectToVatReason() const = 0;
+  virtual TbaiInvoiceInterface* previousInvoice() const = 0;
+  virtual Type                  invoiceType() const = 0;
+  virtual const QByteArray&     signature() const = 0;
+  virtual const QDateTime&      date() const = 0;
+  virtual const QByteArray&     series() const = 0;
+  virtual const QByteArray&     number() const = 0;
+  virtual const QString&        name() const = 0;
+  virtual const QString&        description() const = 0;
+  virtual double                amount() const = 0;
+  QByteArray                    formattedAmount() const { return QByteArray::number(amount(), 'f', 2); }
+  virtual QByteArray            taxBaseAmount() const { return formattedAmount(); }
+  virtual const Recipients&     recipients() const = 0;
+  virtual VatExemption          vatExemption() const { return NoVatExemption; }
+  virtual bool                  isSubjectToVat() const { return notSubjectToVatReason().isEmpty(); }
+  virtual QString               notSubjectToVatReason() const { return QString(); }
 };
 
 #endif

@@ -6,7 +6,8 @@ QTicketBai is an attempt at implementing the TicketBai and LROE protocols using 
 
 The library depends on the following libraries:
 
-* [QtCurl](https://github.com/Plaristote/QtCurl)
+* [QtCurl](https://github.com/planed-es/QtCurl)
+* [QXmlSec](https://github.com/planed-es/QXmlSec)
 * QtCore
 * QtNetwork
 * QtXml
@@ -35,7 +36,6 @@ TBAI_LICENSE              # TODO
 TBAI_SOFTWARE_CIF         # CIF of the company providing the TicketBai software
 TBAI_SOFTWARE_NAME        # Name of the company providing the TicketBai software
 TBAI_TAX_AUTHORITY_URL    # Tax authority (ex: https://batuz.eus/QRTBAI)
-AUTOFIRMA_PATH            # directory in which QTicketBai expects to find `autofirma.jar`
 ```
 
 ### Company data
@@ -58,31 +58,11 @@ const CompanyData CompanyData::self = {
 };
 ```
 
-### AutoFirma
-
-[AutoFirma](https://firmaelectronica.gob.es/Home/Descargas.html) is a software provided by the spanish
-government to sign files using a pkcs12  certificate. QTicketBai uses AutoFirma to sign TicketBai invoices.
-
-The default AutoFirma package contains much more than what's actually needed, which is why we provide
-a script to extract the only one file actually needed by QTicektBai:
-
-```
-scripts/install-autofirma.sh "/usr/local/bin/autofirma.jar"
-```
-
-Note that QTicketBai will look for autofirma.jar using the `PATH` environment variable. Alternatively,
-You can also set the `AUTOFIRMA_PATH` environment variable:
-
-```
-export AUTOFIRMA_PATH="/usr/local/bin"
-```
-
 ## Usage
-### Check the settings
+### Initializing
+#### Check your settings
 The first thing you want to do is to check that your settings are correct. You can use
-the `TbaiSignProcess::checkSettings` function to check the validity of your settings.
-This function will check for your TicketBai settings, display the results to `stderr`,
-and will return `true` or `false` depending on whether your settings seem valid or not:
+the `TbaiSignProcess::checkSettings` function to check the validity of your settings:
 
 ```
 #include <ticketbai-qt/tbaisignprocess.h>
@@ -97,86 +77,191 @@ int main()
 }
 ```
 
-### Implementing invoices
-The next step is to create your own invoices object, implementing the `TbaiInvoiceInterface`.
+The `TbaiSignProcess::checkSettings` function will also display the diagnostic results to
+[stderr](https://cplusplus.com/reference/cstdio/stderr/), allowing you to see what's
+missing from your environment to get this thing up and running.
 
-### Generating a TicketBAI signature for an invoice
-The signing process is asynchronous, so you'll need to listen to signals in order to intercept
-the generated signature and/or your definitive invoice XML including the signature.
+#### Initializing QXmlSec
+QXmlSec is a dependency of QTicketBai, and it needs to be initialized before any
+document signing is performed. Just make sure you maintain an instance of the
+`QXmlSec` object while such operations are running:
 
-##### Synchronous
-Let's first see how to sign an invoice synchronously:
+```
+#include <ticketbai-qt/tbaisignprocess.h>
+#include <xmlsec-qt/xmlsec.h> // QXmlSec header
+
+int main()
+{
+  QXmlSec xmlsec; // QXmlSec instance
+
+  if (TbaiSignProcess::checkSettings())
+  {
+    return 0;
+  }
+  return -1;
+}
+```
+
+#### Initializing QTicketBai
+In the case of QTicketBai, some initialization is required before you make
+any requests to the relevant LROE service. Namely, you need to pre-load your
+certificate, which is to be done using the `TbaiCertificate` class:
+
+```
+#include <ticketbai-qt/tbaisignprocess.h>
+#include <ticketbai-qt/tbaicertificate.h>
+#include <xmlsec-qt/xmlsec.h>
+
+int main()
+{
+  QXmlSec xmlsec;
+
+  if (TbaiSignProcess::checkSettings())
+  {
+    TbaiCertificate::prepare(); // loads your PKCS12 certificate
+    return 0;
+  }
+  return -1;
+}
+```
+
+### Submitting invoices
+#### Implementing the invoice interface
+The next step is to create your own invoices object, implementing the `TbaiInvoiceInterface`
+defined in `ticketbai-qt/invoiceinterface.h`:
+
+```
+#include <ticketbai-qt/invoiceinterface.h>
+class MyInvoice : public TbaiInvoiceInterface
+{
+public:
+  // previousInvoice shall return the previous invoice in the TicketBAI
+  // signing chain, or nullptr if this is the first invoice to get signed.
+  TbaiInvoiceInterface* previousInvoice() const override;
+
+  // Returns a value from the TbaiInvoiceInterface::Type enum,
+  // corresponding to the invoice rectificative type (or just
+  // InvoiceType if the invoice isn't rectificative) defined
+  // in the TicketBAI specification with the key L7.
+  Type invoiceType() const override;
+
+  // Returns the TicketBAI signature for this invoice, or a null QByteArray
+  // if the invoice hasn't been signed yet.
+  const QByteArray& signature() const override;
+
+  // Returns the date and time of the invoice emission.
+  const QDateTime& date() const override;
+
+  // Returns the `series` value for this invoice. Optional
+  const QByteArray& series() const override;
+
+  // Returns the invoice number
+  const QByteArray& number() const override;
+
+  // Returns a name for the invoice
+  const QString& name() const override;
+
+  // Returns a description for the invoice
+  const QString& description() const override;
+
+  // Returns the list of recipients for this invoice, represented as
+  // CompanyData (see ticketbai-qt/companydata.h)
+  const Recipients& recipients() const override;
+};
+```
+
+The convenience `TbaiInvoiceComponent` class is also available in `ticketbai-qt/invoicecomponent.h`,
+providing a simple QObject-based implementation for `TbaiInvoiceInterface`.
+
+#### Generating a TicketBAI signature for an invoice
+Now that we can expose our custom invoices types to QTicketBai, the next thing we'll
+want to do is to generate TicketBAI documents:
 
 ```
 #include <ticketbai-qt/tbaisignprocess.h>
 #include <iostream>
 
-static void sign_invoice(const TbaiInvoiceInterface& invoice)
+void sign_invoice(const TbaiInvoiceInterface& invoice)
 {
-  TbaiSignProcess signProvider;
+  TbaiDocument document = TbaiDocument().createFrom(invoice);
 
-  QObject::connect(&signProvider, &TbaiSignProcess::generatedXml, [](QByteArray xml)
+  if (TbaiSignProcess::sign(document))
   {
-    std::cout << "Generated xml:\n" << xml.toStdString() << std::endl;
-  });
-  signProvider.sign(invoice);
-  signProvider.wait();
+    std::cout << "Generated signature: " << document.signature().constData() << std::endl;
+    std::cout << "Generated xml:\n" << document.toString(2) << std::endl;
+  }
+  else
+    std::cerr << "Failed to sign invoice" << std::endl;
 }
 ```
 
-##### Asynchronous
-In order to sign your invoices asynchronously, we'll just need to make use a pointer to
-ensure our `TbaiSignProcess` object doesn't expire at the end of the scope. We'll then
-listen to the `finished` signal to know when to clean up the pointer:
-
-```
-#include <ticketbai-qt/tbaisignprocess.h>
-#include <iostream>
-
-static void sign_invoice(const TbaiInvoiceInterface& invoice)
-{
-  TbaiSignProcess* signProvider = new TbaiSignProcess();
-
-  QObject::connect(signProvider, &TbaiSignProcess::generatedXml, [](QByteArray xml)
-  {
-    std::cout << "Generated xml:\n" << xml.toStdString() << std::endl;
-  });
-  QObject::connect(signProvider, &TbaiSignProcess::finished, []()
-  {
-    signProvider->deleteLater();
-  });
-  signProvider.sign(invoice);
-}
-```
+Don't forget to store the return value of `document.signature()` in your invoice object,
+so that it can be used later when signing your next invoice. To put it simply, for the next
+invoice you will sign, you want `invoice.previousInvoice()->signature()` to return
+the current value of `document.signature()`.
 
 ##### Catching errors
-Errors might happen during the signing process. You should also listen to the `failure` signal
-so you can report the errors:
+Errors might happen during the signing process. The `TbaiSignProcess::sign` function
+return value can be used to get details about failures:
 
 ```
-QObject::connect(signProcess, &TbaiSignProcess::failed, [](QString error)
+void sign_invoice(const TbaiInvoiceInterface& invoice)
 {
-  qDebug() << error;
-});
+  TbaiDocument document = TbaiDocument().createFrom(invoice);
+  TbaiSignProcess::ReturnValue result;
+
+  result = TbaiSignProcess::sign(document);
+  if (result)
+  {
+    std::cout << "Generated signature: " << document.signature().constData() << std::endl;
+    std::cout << "Generated xml:\n" << result.xml.constData() << std::endl;
+  }
+  else
+    std::cerr << "Failed to sign invoice" << result.error.toStdString() << std::endl;
+}
 ```
 
-##### Signature
-As you will need to use the generated signature to properly sign the next invoices, it may be a good
-idea to store the signature someplace easily accessible for your signing process. When signing an invoice,
-on top of intercepting the generated invoice XML, you can also intercept the signature using the `generatedSignature`
-signal:
+#### Loading a TicketBAI document from file
+
+At anytime, you can load a TicketBAI document from a file:
 
 ```
-QObject::connect(signProcess, &TbaiSignProcess::generatedSignature, [](QByteArray signature)
+#include <ticketbai-qt/tbaidocument.h>
+#include <iostream>
+
+int main(int argc, char** argv)
 {
-  // In this handler, you're expected to store the signature, so that from now on, the
-  // `getSignature` virtual method our `invoice` object returns the value of `signature`.
-  qDebug() << "New TicketBAI signature:" << signature;
-});
+  TbaiDocument document;
+
+  if (argc == 2)
+  {
+    if (document.loadFromFile(argv[1]))
+    {
+      std::cout << document.signature().constData() << std::endl;
+      return 0;
+    }
+    else
+      std::cerr << "invalid TicketBAI document " << argv[1] << std::endl;
+  }
+  else
+    std::cerr << "usage: ./command [filepath]" << std::endl;
+  return -1;
+}
 ```
 
-Your `TbaiInvoiceInterface` implementation *must* return the value of `signature` when its `getSignature`
-method gets called. This will be relevant when signing the next invoice.
+In case you intend to store your TicketBAI invoices another way, you
+may also initialize a `TbaiDocument` directly from the XML source:
+
+```
+TbaiDocument document;
+QFile file("/var/lib/ticketbai/invoice.xml");
+
+if (file.open(QIODevice::ReadOnly))
+{
+  document.loadFrom(file.readAll());
+  std::cout << document.signature().constData() << std::endl;
+}
+```
 
 ### Sending LROE documents
 

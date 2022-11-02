@@ -2,8 +2,9 @@
 # define LROEDOCUMENT_H
 
 # include <QDomDocument>
+# include "ticketbai-qt_global.h"
 
-class LROEDocument : public QDomDocument
+class TICKETBAIQT_EXPORT LROEDocument : public QDomDocument
 {
 public:
   static const QByteArray apiVersion;

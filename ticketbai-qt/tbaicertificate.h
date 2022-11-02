@@ -6,8 +6,9 @@
 # include <QSslConfiguration>
 # include <QSslCertificate>
 # include <QCryptographicHash>
+# include "ticketbai-qt_global.h"
 
-struct TbaiCertificate
+class TICKETBAIQT_EXPORT TbaiCertificate
 {
 public:
   static QSslCertificate certificate;

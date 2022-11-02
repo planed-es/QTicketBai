@@ -1,10 +1,11 @@
 #ifndef  TBAIINVOICE_H
 # define TBAIINVOICE_H
 
+# include "ticketbai-qt_global.h"
 # include "invoiceinterface.h"
 # include <QtXml>
 
-class TbaiInvoice
+class TICKETBAIQT_EXPORT TbaiInvoice
 {
 public:
   TbaiInvoice(const TbaiInvoiceInterface* ptr) : invoice(*ptr) {}

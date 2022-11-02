@@ -1,19 +1,16 @@
 #ifndef  TST_LROESUBMITPROCESS_H
 # define TST_LROESUBMITPROCESS_H
 
-# include <QObject>
-# include <QTest>
+# include "helper_xmlsec_test.h"
 
-class LROESubmitProcessTest : public QObject
+class LROESubmitProcessTest : public XmlSecTest
 {
   Q_OBJECT
 private slots:
-  void initTestCase();
   void canSubmitExampleDocument();
   void canSubmitInvoice();
   void canGenerateInvoices();
   void canQueryInvoices();
-  void cleanupTestCase();
 };
 
 #endif

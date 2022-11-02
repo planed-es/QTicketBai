@@ -4,16 +4,11 @@
 #include "tbaisignprocess.h"
 #include "tbaidocument.h"
 #include "tbaicertificate.h"
+#include "xmlsec-qt/xmlverify.h"
 #include "xmlsec-qt/xmlsign.h"
 #include "xmlsec-qt/xades/object.h"
 #include <iostream>
 #include <QDebug>
-
-TbaiSignProcess::TbaiSignProcess(QObject *parent) : QObject(parent)
-{
-  connect(this, &TbaiSignProcess::failed,       this, &TbaiSignProcess::finished, Qt::QueuedConnection);
-  connect(this, &TbaiSignProcess::generatedXml, this, &TbaiSignProcess::finished, Qt::QueuedConnection);
-}
 
 bool TbaiSignProcess::checkSettings()
 {
@@ -38,20 +33,22 @@ bool TbaiSignProcess::checkSettings()
   return true;
 }
 
-void TbaiSignProcess::sign(const TbaiInvoiceInterface& invoice)
+TbaiSignProcess::ReturnValue TbaiSignProcess::sign(TbaiDocument& document)
 {
-  bool success;
+  ReturnValue retval;
   QXmlSign signer;
   QXmlSecCertificate certificate;
 
-  document.createFrom(invoice);
-  signer.withSignatureId("Signature")
-        .useNamespace(TbaiDocument::signatureNamespace())
-        .useDocument(document);
   certificate.setFormat(QXmlSecCertificate::Pkcs12);
   certificate.setFilepath(TbaiCertificate::path());
   certificate.setPassword(TbaiCertificate::password());
   certificate.setName("QTicketBai/pkcs12");
+
+  signer.withSignatureId("Signature")
+        .useNamespace(TbaiDocument::signatureNamespace())
+        .useDocument(document)
+        .useSslKey(TbaiCertificate::sslKey, TbaiCertificate::password().toUtf8())
+        .useCertificate(certificate);
 
   QString keyInfoId              = signer.signatureContext().tagId("KeyInfo");
   QString signatureSignInfoRefId = signer.signatureContext().tagId("Reference");
@@ -123,12 +120,12 @@ void TbaiSignProcess::sign(const TbaiInvoiceInterface& invoice)
   /*
    * Signing
    */
-  if (signer.sign(certificate))
+  if (signer.sign())
   {
     document.loadFrom(signer.toString().toUtf8());
-    emit generatedSignature(document.getSignature());
-    emit generatedXml(signer.toString().toUtf8());
+    retval.xml = signer.toString().toUtf8();
   }
   else
-    emit failed("QXmlSign failed to sign the document");
+    retval.error = "QXmlSign failed to sign the document";
+  return retval;
 }

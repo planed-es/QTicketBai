@@ -8,7 +8,7 @@
 
 class LROESubmitProcessTest;
 
-class LROESubmitProcess : public LROEClient
+class TICKETBAIQT_EXPORT LROESubmitProcess : public LROEClient
 {
   Q_OBJECT
   friend class LROESubmitProcessTest;

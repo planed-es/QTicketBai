@@ -3,7 +3,7 @@
 
 # include "lroedocument.h"
 
-class TbaiUploadDocument : public LROEDocument
+class TICKETBAIQT_EXPORT TbaiUploadDocument : public LROEDocument
 {
 public:
   TbaiUploadDocument(ModelType, OperationType = AddOperation);

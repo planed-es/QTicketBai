@@ -10,24 +10,20 @@ class QProcess;
 class QDomDocument;
 class TbaiInvoiceInterface;
 
-class TbaiSignProcess : public QObject
+class TICKETBAIQT_EXPORT TbaiSignProcess
 {
-  Q_OBJECT
 public:
-  explicit TbaiSignProcess(QObject *parent = nullptr);
-
   static bool checkSettings();
 
-  void sign(const TbaiInvoiceInterface&);
+  struct ReturnValue
+  {
+    ReturnValue(QString param = QString()) : error(param) {}
+    operator bool() const { return error.isNull(); }
+    QString error;
+    QByteArray xml;
+  };
 
-signals:
-  void generatedSignature(QByteArray);
-  void generatedXml(QByteArray);
-  void failed(QString error);
-  void finished();
-
-private:
-  TbaiDocument   document;
+  static ReturnValue sign(TbaiDocument&);
 };
 
 #endif // TBAISIGNPROCESS_H

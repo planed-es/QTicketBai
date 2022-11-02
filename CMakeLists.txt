@@ -30,6 +30,8 @@ add_library(ticketbai-qt SHARED
   ${sources}
 )
 
+target_compile_definitions(ticketbai-qt PRIVATE TICKETBAIQT_LIBRARY)
+
 target_link_libraries(ticketbai-qt PRIVATE
   Qt${QT_VERSION_MAJOR}::Core
   Qt${QT_VERSION_MAJOR}::Network

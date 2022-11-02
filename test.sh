@@ -36,13 +36,6 @@ cd -
 cp ./examples/invoice-upload.xml "$TESTDIR/invoice-upload.xml"
 
 ##
-## Download AutoFirma
-##
-if ! [ -f "$TESTDIR/autofirma.jar" ] ; then
-  scripts/install-autofirma.sh "$TESTDIR/autofirma.jar"
-fi
-
-##
 ## Prepare environment variables
 ##
 
@@ -61,7 +54,6 @@ export TBAI_EXAMPLES_PATH="$TESTDIR"
 export TBAI_LICENSE="TBAIBI00000000PRUEBA"
 export TBAI_SOFTWARE_NIF="A99800005"
 export TBAI_SOFTWARE_NAME="SOFTWARE GARANTE TICKETBAI PRUEBA"
-export AUTOFIRMA_PATH="$TESTDIR"
 
 if ! [ -f "$TBAI_CERTIFICATE_PATH" ] ; then
   echo "Certificate file not found: " $TBAI_CERTIFICATE_PATH
@@ -78,6 +70,8 @@ fi
 ##
 echo "+ Running the tests"
 
-build/tests/lroesubmitprocess
+if ! scripts/qtest_runner.sh build/tests ; then
+  exit -1
+fi
 
 #rm -rf "$TESTDIR"

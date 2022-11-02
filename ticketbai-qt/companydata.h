@@ -7,6 +7,8 @@ struct CompanyData
 {
   static const CompanyData self;
   QString name, address, city, cif, phone, fax, postalCode, email;
+
+  bool operator==(const CompanyData& other) const { return cif == other.cif; }
 };
 
 #endif

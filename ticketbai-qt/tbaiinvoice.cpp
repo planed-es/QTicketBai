@@ -10,14 +10,14 @@ QByteArray TbaiInvoice::getId() const
 {
   QChar   separator('-');
   QString out("TBAI");
-  const auto&      signature = invoice.getSignature();
+  const auto&      signature = invoice.signature();
   const QByteArray cifNumber = CompanyData::self.cif.toUtf8();
 
   out += separator;
   for (int i = 0 ; i < 9 && i < cifNumber.length() ; ++i)
     out += cifNumber[i];
   out += separator;
-  out += invoice.getDate().toString("ddMMyy");
+  out += invoice.date().toString("ddMMyy");
   out += separator;
   for (int i = 0 ; i < 13 && i < signature.length() ; ++i)
     out += signature[i];
@@ -37,9 +37,9 @@ QUrl TbaiInvoice::getUrl() const
   QByteArray url = qgetenv("TBAI_TAX_AUTHORITY_URL");
 
   url += "?id=" + QUrl::toPercentEncoding(getIdWithCRC());
-  url += "&s="  + QUrl::toPercentEncoding(invoice.getSeries());
-  url += "&nf=" + QUrl::toPercentEncoding(invoice.getNumber());
-  url += "&i="  + QUrl::toPercentEncoding(invoice.getFormattedAmount());
+  url += "&s="  + QUrl::toPercentEncoding(invoice.series());
+  url += "&nf=" + QUrl::toPercentEncoding(invoice.number());
+  url += "&i="  + QUrl::toPercentEncoding(invoice.formattedAmount());
   url += "&cr=" + QUrl::toPercentEncoding(generateCRC(url));
   return QUrl(url);
 }

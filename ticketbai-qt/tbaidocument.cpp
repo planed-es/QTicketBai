@@ -72,7 +72,7 @@ static QDomElement generateRecipientXml(QDomDocument& document, const TbaiInvoic
 {
   QDomElement root = document.createElement("Destinatarios");
 
-  for (const CompanyData& recipient : invoice.getRecipients())
+  for (const CompanyData& recipient : invoice.recipients())
     root.appendChild(generateRecipientXml(document, recipient));
   return root;
 }
@@ -103,7 +103,7 @@ static QDomElement generateCorrectionInvoiceHeader(QDomDocument& document, const
   QDomElement codeEl = document.createElement("Codigo");
   QDomElement typeEl = document.createElement("Tipo");
 
-  codeEl.appendChild(document.createTextNode(getCodeForInvoiceType(invoice.getInvoiceType())));
+  codeEl.appendChild(document.createTextNode(getCodeForInvoiceType(invoice.invoiceType())));
   codeEl.appendChild(document.createTextNode("S")); // S for Substitution, I for difference
   // Missing element(s): ImporteRectificacion and Sustitutiva, or ImporteRectificacionSustitutiva
   return root;
@@ -117,16 +117,16 @@ static QDomElement generateInvoiceHeader(QDomDocument& document, const TbaiInvoi
   QDomElement dateEl   = document.createElement("FechaExpedicionFactura");
   QDomElement hourEl   = document.createElement("HoraExpedicionFactura");
 
-  serieEl .appendChild(document.createTextNode(invoice.getSeries()));
-  numberEl.appendChild(document.createTextNode(invoice.getNumber()));
-  dateEl  .appendChild(document.createTextNode(invoice.getDate().toString("dd-MM-yyyy")));
-  hourEl  .appendChild(document.createTextNode(invoice.getDate().toString("hh:mm:ss")));
-  if (invoice.getSeries().length() > 0)
+  serieEl .appendChild(document.createTextNode(invoice.series()));
+  numberEl.appendChild(document.createTextNode(invoice.number()));
+  dateEl  .appendChild(document.createTextNode(invoice.date().toString("dd-MM-yyyy")));
+  hourEl  .appendChild(document.createTextNode(invoice.date().toString("hh:mm:ss")));
+  if (invoice.series().length() > 0)
     root.appendChild(serieEl);
   root.appendChild(numberEl);
   root.appendChild(dateEl);
   root.appendChild(hourEl);
-  if (invoice.getInvoiceType() != TbaiInvoiceInterface::InvoiceType)
+  if (invoice.invoiceType() != TbaiInvoiceInterface::InvoiceType)
     root.appendChild(generateCorrectionInvoiceHeader(document, invoice));
   return root;
 }
@@ -140,8 +140,8 @@ static QDomElement generateInvoiceData(QDomDocument& document, const TbaiInvoice
   QDomElement keyEl         = document.createElement("IDClave");
   QDomElement vatEl         = document.createElement("ClaveRegimenIvaOpTrascendencia");
 
-  descriptionEl.appendChild(document.createTextNode(invoice.getDescription().toUtf8()));
-  amountEl.appendChild(document.createTextNode(invoice.getFormattedAmount()));
+  descriptionEl.appendChild(document.createTextNode(invoice.description().toUtf8()));
+  amountEl.appendChild(document.createTextNode(invoice.formattedAmount()));
   keysEl.appendChild(keyEl);
     keyEl.appendChild(vatEl);
       vatEl.appendChild(document.createTextNode(VatPolicy::Default));
@@ -162,7 +162,7 @@ static QDomElement generateVatInvoiceBreakdown(QDomDocument& document, const Tba
   // S1 -> Sin inversión del sujeto pasivo
   // S2 -> Con inversión del sujeto pasivo
   typeEl.appendChild(document.createTextNode("S1"));
-  taxableBaseEl.appendChild(document.createTextNode(invoice.getTaxBaseAmount()));
+  taxableBaseEl.appendChild(document.createTextNode(invoice.taxBaseAmount()));
   root.appendChild(typeEl);
   root.appendChild(vatEl);
   vatEl.appendChild(vatDetailEl);
@@ -181,7 +181,7 @@ static QDomElement generateInvoiceBreakdown(QDomDocument& document, const TbaiIn
     QDomElement exemptionEl;
 
     subjectEl = document.createElement("Sujeta");
-    switch (invoice.getVatExemption())
+    switch (invoice.vatExemption())
     {
     case TbaiInvoiceInterface::NoVatExemption:
       exemptionEl = document.createElement("NoExenta");
@@ -199,8 +199,8 @@ static QDomElement generateInvoiceBreakdown(QDomDocument& document, const TbaiIn
     QDomElement causeEl      = document.createElement("Causa");
     QDomElement amountEl     = document.createElement("Importe");
 
-    causeEl.appendChild(document.createTextNode(invoice.getNotSubjectToVatReason().toUtf8()));
-    amountEl.appendChild(document.createTextNode(invoice.getFormattedAmount()));
+    causeEl.appendChild(document.createTextNode(invoice.notSubjectToVatReason().toUtf8()));
+    amountEl.appendChild(document.createTextNode(invoice.formattedAmount()));
     subjectEl = document.createElement("NoSujeta");
     subjectEl.appendChild(notSubjectEl);
     notSubjectEl.appendChild(causeEl);
@@ -219,14 +219,14 @@ static QDomElement generatePreviousInvoiceXml(QDomDocument& document, const Tbai
   QDomElement dateEl      = document.createElement("FechaExpedicionFacturaAnterior");
   QDomElement signatureEl = document.createElement("SignatureValueFirmaFacturaAnterior");
 
-  if (invoice.getSeries().length() > 0)
+  if (invoice.series().length() > 0)
   {
-    serieEl.appendChild(document.createTextNode(invoice.getSeries()));
+    serieEl.appendChild(document.createTextNode(invoice.series()));
     root.appendChild(serieEl);
   }
-  numberEl.appendChild(document.createTextNode(invoice.getNumber()));
-  dateEl.appendChild(document.createTextNode(invoice.getDate().toString("dd-MM-yyyy")));
-  signatureEl.appendChild(document.createTextNode(invoice.getSignature()));
+  numberEl.appendChild(document.createTextNode(invoice.number()));
+  dateEl.appendChild(document.createTextNode(invoice.date().toString("dd-MM-yyyy")));
+  signatureEl.appendChild(document.createTextNode(invoice.signature()));
   root.appendChild(numberEl);
   root.appendChild(dateEl);
   root.appendChild(signatureEl);
@@ -261,7 +261,7 @@ static QDomElement generateSoftwareXml(QDomDocument& document)
 static QDomElement pluralSubjectHintXml(QDomDocument& document, const TbaiInvoiceInterface& invoice)
 {
   QDomElement element = document.createElement("VariosDestinatarios");
-  QString text = invoice.getRecipients().size() > 1 ? "Y" : "N";
+  QString text = invoice.recipients().size() > 1 ? "Y" : "N";
 
   element.appendChild(document.createTextNode(text));
   return element;
@@ -272,7 +272,7 @@ static QByteArray getDeviceUid()
   return "AAAAAAA";
 }
 
-void TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
+TbaiDocument& TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
 {
   clear();
   root = createElement("T:TicketBai");
@@ -291,21 +291,22 @@ void TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
   root.appendChild(headerEl);
 
   subjectsEl.appendChild(generateEmitterXml(*this, invoice));
-  if (invoice.getRecipients().size() > 0)
+  if (invoice.recipients().size() > 0)
     subjectsEl.appendChild(generateRecipientXml(*this, invoice));
-  if (invoice.getRecipients().size() > 1)
+  if (invoice.recipients().size() > 1)
     subjectsEl.appendChild(pluralSubjectHintXml(*this, invoice));
   root.appendChild(subjectsEl);
   invoiceEl.appendChild(generateInvoiceHeader(*this, invoice));
   invoiceEl.appendChild(generateInvoiceData(*this, invoice));
   invoiceEl.appendChild(generateInvoiceBreakdown(*this, invoice));
   root.appendChild(invoiceEl);
-  if (invoice.getPreviousInvoice())
-    root.appendChild(generatePreviousInvoiceXml(*this, *invoice.getPreviousInvoice()));
+  if (invoice.previousInvoice())
+    root.appendChild(generatePreviousInvoiceXml(*this, *invoice.previousInvoice()));
   footPrintEl.appendChild(generateSoftwareXml(*this));
   footPrintEl.appendChild(deviceIdEl);
   root.appendChild(footPrintEl);
   appendChild(root);
+  return *this;
 }
 
 bool TbaiDocument::loadFromFile(const QString& path)
@@ -341,7 +342,7 @@ bool TbaiDocument::isSigned() const
   return !root.elementsByTagName(signatureNamespace() + ":Signature").isEmpty();
 }
 
-QByteArray TbaiDocument::getSignature() const
+QByteArray TbaiDocument::signature() const
 {
   QDomNodeList matches = root.elementsByTagName(signatureNamespace() + ":SignatureValue");
   QDomNode signatureNode = matches.item(0);
@@ -358,9 +359,9 @@ QByteArray TbaiDocument::getSignature() const
 
 static QString getDefaultFileNameFor(const TbaiInvoiceInterface& invoice)
 {
-  if (invoice.getRecipients().size() > 0)
+  if (invoice.recipients().size() > 0)
   {
-    const CompanyData& contact = invoice.getRecipients().first();
+    const CompanyData& contact = invoice.recipients().first();
 
     return QUrl::toPercentEncoding(contact.cif + '-' + contact.name, " ");
   }
@@ -369,8 +370,8 @@ static QString getDefaultFileNameFor(const TbaiInvoiceInterface& invoice)
 
 QString TbaiDocument::getFileNameFor(const TbaiInvoiceInterface& invoice)
 {
-  QString time    = invoice.getDate().toString("yyyyMMddhhmmss");
-  QString title   = invoice.getName();
+  QString time    = invoice.date().toString("yyyyMMddhhmmss");
+  QString title   = invoice.name();
 
   if (title.isEmpty())
     title = getDefaultFileNameFor(invoice);
@@ -381,5 +382,5 @@ QString TbaiDocument::getFileNameFor(const TbaiInvoiceInterface& invoice)
 
 QString TbaiDocument::signatureNamespace()
 {
-  return "dsig";
+  return "ds";
 }

@@ -10,7 +10,7 @@
 
 class QNetworkReply;
 
-class LROEClient : public QObject
+class TICKETBAIQT_EXPORT LROEClient : public QObject
 {
   Q_OBJECT
 public:

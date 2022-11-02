@@ -6,7 +6,7 @@
 
 void resetElement(QDomElement& el);
 
-class TbaiQueryDocument : public LROEDocument
+class TICKETBAIQT_EXPORT TbaiQueryDocument : public LROEDocument
 {
 public:
   TbaiQueryDocument(ModelType model) : LROEDocument(model, LROEDocument::QueryOperation)
