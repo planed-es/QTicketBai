@@ -33,3 +33,8 @@ add_executable(tbaiinvoice tst_tbaiinvoice.cpp
   ../ticketbai-qt/tbaiinvoice.cpp)
 add_test(NAME tbaiinvoice COMMAND tbaiinvoice)
 target_link_libraries(tbaiinvoice PRIVATE ${test_libraries})
+
+add_executable(tbaicertificate tst_tbaicertificate.cpp
+  ../ticketbai-qt/tbaicertificate.cpp)
+add_test(NAME tbaicertificate COMMAND tbaicertificate)
+target_link_libraries(tbaicertificate PRIVATE ${test_libraries})

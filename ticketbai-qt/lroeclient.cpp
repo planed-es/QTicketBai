@@ -64,8 +64,8 @@ QNetworkReply* LROEClient::sendDocument(const LROEDocument& document)
   request.setRawHeader(customHeaderPrefix + "version",      LROEDocument::apiVersion);
   request.setRawHeader(customHeaderPrefix + "content-type", "application/xml");
   request.setRawHeader(customHeaderPrefix + "data",         jsonHeader.toJson(QJsonDocument::Compact));
-  curl.setCertificate(TbaiCertificate::pemPath(), QSsl::Pem);
-  curl.setSslKey(TbaiCertificate::keyPath(), QSsl::Rsa);
+  curl.setCertificate(TbaiCertificate::pemCertificatePath(), QSsl::Pem);
+  curl.setSslKey(TbaiCertificate::pemKeyPath(), QSsl::Rsa);
   curl.setVerbosityLevel(7);
   return curl.send(request, compressedData);
 }

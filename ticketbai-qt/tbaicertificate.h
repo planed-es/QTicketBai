@@ -28,15 +28,14 @@ public:
 
   static bool prepare();
   static void cleanup();
-  static QString pemPath();
-  static QString keyPath();
+  static QString pemCertificatePath();
+  static QString pemKeyPath();
   static QString serialNumber();
   static QByteArray digest(QCryptographicHash::Algorithm);
 
 private:
   static bool preparePemCertificates();
   static bool extractMetadata();
-  static QString pathWithExtension(const QString& extension);
 };
 
 #endif // TBAICERTIFICATE_H

@@ -4,10 +4,13 @@
 #include <QProcess>
 #include <QSslCertificate>
 #include <QSslKey>
+#include <QTemporaryFile>
 #include <QDebug>
 
 QSslCertificate TbaiCertificate::certificate;
 QSslKey         TbaiCertificate::sslKey;
+static QTemporaryFile pemCertificateFile;
+static QTemporaryFile pemKeyFile;
 
 QString TbaiCertificate::alias()
 {
@@ -16,22 +19,14 @@ QString TbaiCertificate::alias()
   return alias.isEmpty() ? QString("1") : alias;
 }
 
-QString TbaiCertificate::pemPath()
+QString TbaiCertificate::pemCertificatePath()
 {
-  return pathWithExtension(".pem");
+  return pemCertificateFile.fileName();
 }
 
-QString TbaiCertificate::keyPath()
+QString TbaiCertificate::pemKeyPath()
 {
-  return pathWithExtension(".key");
-}
-
-QString TbaiCertificate::pathWithExtension(const QString& extension)
-{
-  QString            certificatePath = path();
-  QRegularExpression extensionMatcher("\\.p12$", QRegularExpression::CaseInsensitiveOption);
-
-  return certificatePath.replace(extensionMatcher, extension);
+  return pemKeyFile.fileName();
 }
 
 static QStringList certificate_prepare_params()
@@ -46,6 +41,10 @@ bool TbaiCertificate::prepare()
 {
   QFile pfxFile(TbaiCertificate::path());
 
+  // Prepare pem temporary files
+  pemCertificateFile.open(); pemCertificateFile.close();
+  pemKeyFile.open(); pemKeyFile.close();
+  // Load PKCS12 certificate
   if (pfxFile.open(QIODevice::ReadOnly))
   {
     bool a = preparePemCertificates();
@@ -69,10 +68,10 @@ bool TbaiCertificate::preparePemCertificates()
   QStringList key_params = pem_params;
   QString openssl_bin("openssl");
 
-  pem_params << "-out" << TbaiCertificate::pathWithExtension(".pem");
+  pem_params << "-out" << pemCertificatePath();
   pem_params << "-clcerts" << "-nokeys";
   pem_process.start(openssl_bin, pem_params);
-  key_params << "-out" << TbaiCertificate::pathWithExtension(".key");
+  key_params << "-out" << pemKeyPath();
   key_params << "-nocerts" << "-nodes";
   key_process.start(openssl_bin, key_params);
   pem_process.waitForFinished();
@@ -86,8 +85,8 @@ bool TbaiCertificate::preparePemCertificates()
 
 void TbaiCertificate::cleanup()
 {
-  QFile::remove(TbaiCertificate::pathWithExtension(".pem"));
-  QFile::remove(TbaiCertificate::pathWithExtension(".key"));
+  pemCertificateFile.remove();
+  pemKeyFile.remove();
 }
 
 QByteArray TbaiCertificate::digest(QCryptographicHash::Algorithm algorithm)
