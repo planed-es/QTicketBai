@@ -33,42 +33,57 @@ TBAI_OUTPUT_PATH          # directory in which your TicketBai invoices will be s
 TBAI_CERTIFICATE_PATH     # path to your pkcs12 certificate file
 TBAI_CERTIFICATE_PASSWORD # password to yuor pkcs12 certificate
 TBAI_LICENSE              # TODO
-TBAI_SOFTWARE_CIF         # CIF of the company providing the TicketBai software
-TBAI_SOFTWARE_NAME        # Name of the company providing the TicketBai software
 TBAI_TAX_AUTHORITY_URL    # Tax authority (ex: https://batuz.eus/QRTBAI)
 ```
 
-### Company data
-
-To define the identity of the emitter entity, you must define the `CompanyData::self` global
-variable:
+## Usage
+### Initializing
+#### Setting up user and developer informations
+The first thing you want to do is to setup the user information for the entity
+that will use your program to manage their invoices, as well as your own
+information as a TicketBAI developer entity:
 
 ```
-#include <ticketbai-qt/companydata.h>
+#include <ticketbai-qt/qticketbai.h>
 
-const CompanyData CompanyData::self = {
+const CompanyData user = {
   "PlanED S.L.",
   "1 Camino del Caminante",
   "City",
-  "CIF number",
+  NifIvaId, // ID type, as defined in ticketbai-qt/companydata.h in the TbaiIdentityType enum
+  "ID", // Cif, nif, depending on the ID type
   "Phone number",
   "Fax number",
   "Postal code",
   "Email"
 };
-```
-
-## Usage
-### Initializing
-#### Check your settings
-The first thing you want to do is to check that your settings are correct. You can use
-the `TbaiSignProcess::checkSettings` function to check the validity of your settings:
-
-```
-#include <ticketbai-qt/tbaisignprocess.h>
 
 int main()
 {
+  QTicketBai ticketbai; // QTicketBai instance
+
+  ticketbai.withUser(user);
+  ticketbai.withDeveloper(user);
+  reutrn 0;
+}
+```
+
+#### Check your settings
+The second thing you want to do is to check that your settings are correct. You can use
+the `TbaiSignProcess::checkSettings` function to check the validity of your settings:
+
+```
+#include <ticketbai-qt/qticketbai.h>
+#include <ticketbai-qt/tbaisignprocess.h>
+
+const CompanyData user = ...
+
+int main()
+{
+  QTicketBai ticketbai;
+
+  ticketbai.withUser(user)
+  ticketbai.withDeveloper(user);
   if (TbaiSignProcess::checkSettings())
   {
     return 0; // QTicketBai is ready to sign and submit invoices
@@ -87,13 +102,19 @@ document signing is performed. Just make sure you maintain an instance of the
 `QXmlSec` object while such operations are running:
 
 ```
+#include <ticketbai-qt/qticketbai.h>
 #include <ticketbai-qt/tbaisignprocess.h>
 #include <xmlsec-qt/xmlsec.h> // QXmlSec header
+
+const CompanyData user = ...
 
 int main()
 {
   QXmlSec xmlsec; // QXmlSec instance
+  QTicketBai ticketbai;
 
+  ticketbai.withUser(user)
+  ticketbai.withDeveloper(user);
   if (TbaiSignProcess::checkSettings())
   {
     return 0;
@@ -108,14 +129,20 @@ any requests to the relevant LROE service. Namely, you need to pre-load your
 certificate, which is to be done using the `TbaiCertificate` class:
 
 ```
+#include <ticketbai-qt/qticketbai.h>
 #include <ticketbai-qt/tbaisignprocess.h>
 #include <ticketbai-qt/tbaicertificate.h>
 #include <xmlsec-qt/xmlsec.h>
 
+const CompanyData user = ...
+
 int main()
 {
   QXmlSec xmlsec;
+  QTicketBai ticketbai;
 
+  ticketbai.withUser(user)
+  ticketbai.withDeveloper(user);
   if (TbaiSignProcess::checkSettings())
   {
     TbaiCertificate::prepare(); // loads your PKCS12 certificate

@@ -1,5 +1,5 @@
 #include "lroedocument.h"
-#include "companydata.h"
+#include "qticketbai.h"
 #include <QMap>
 #include <QFile>
 #include <QDebug>
@@ -37,8 +37,8 @@ static QDomElement generateEmitterXml(QDomDocument& document)
   QDomElement cifEl  = document.createElement("NIF");
   QDomElement nameEl = document.createElement("ApellidosNombreRazonSocial");
 
-  cifEl.appendChild(document.createTextNode(CompanyData::self.cif));
-  nameEl.appendChild(document.createTextNode(CompanyData::self.name));
+  cifEl.appendChild(document.createTextNode(QTicketBai::user().id));
+  nameEl.appendChild(document.createTextNode(QTicketBai::user().name));
   root.appendChild(cifEl);
   root.appendChild(nameEl);
   return root;

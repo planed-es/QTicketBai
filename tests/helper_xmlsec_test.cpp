@@ -3,10 +3,12 @@
 
 void XmlSecTest::initTestCase()
 {
+  QTicketBaiTest::initTestCase();
   QVERIFY(TbaiCertificate::prepare());
 }
 
 void XmlSecTest::cleanupTestCase()
 {
+  QTicketBaiTest::cleanupTestCase();
   TbaiCertificate::cleanup();
 }

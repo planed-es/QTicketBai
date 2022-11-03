@@ -4,17 +4,6 @@
 
 QTEST_MAIN(TbaiInvoiceTest)
 
-const CompanyData CompanyData::self{
-  "5Yd5j4iyKM7qjJnDKVAptFTF6A6qLu",
-  "15 camino del caminante",
-  "Bilbao",
-  "A99805061",
-  "+33550209060",
-  "+33550209061",
-  "12345",
-  "e@mail.com"
-};
-
 static QSharedPointer<TbaiInvoiceComponent> testInvoice()
 {
   auto invoice = QSharedPointer<TbaiInvoiceComponent>(new TbaiInvoiceComponent);

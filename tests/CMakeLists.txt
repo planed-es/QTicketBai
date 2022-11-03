@@ -18,8 +18,9 @@ set(test_libraries
 
 add_executable(lroesubmitprocess
   tst_lroesubmitprocess.cpp
-  helper_companydata.cpp
+  helper_tbai_test.cpp
   helper_xmlsec_test.cpp
+  ../ticketbai-qt/qticketbai.cpp
   ../ticketbai-qt/lroesubmitprocess.cpp
   ../ticketbai-qt/lroeclient.cpp
   ../ticketbai-qt/lroedocument.cpp
@@ -34,6 +35,8 @@ target_link_libraries(lroesubmitprocess PRIVATE ${test_libraries})
 
 add_executable(tbaiinvoice
   tst_tbaiinvoice.cpp
+  helper_tbai_test.cpp
+  ../ticketbai-qt/qticketbai.cpp
   ../ticketbai-qt/tbaiinvoice.cpp
   ../ticketbai-qt/invoicecomponent.cpp)
 add_test(NAME tbaiinvoice COMMAND tbaiinvoice)
@@ -47,8 +50,9 @@ target_link_libraries(tbaicertificate PRIVATE ${test_libraries})
 
 add_executable(tbaisignprocess
   tst_tbaisignprocess.cpp
-  helper_companydata.cpp
+  helper_tbai_test.cpp
   helper_xmlsec_test.cpp
+  ../ticketbai-qt/qticketbai.cpp
   ../ticketbai-qt/tbaicertificate.cpp
   ../ticketbai-qt/tbaidocument.cpp
   ../ticketbai-qt/tbaisignprocess.cpp)

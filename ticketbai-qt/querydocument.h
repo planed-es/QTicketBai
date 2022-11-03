@@ -50,7 +50,7 @@ public:
   void setRecipient(const CompanyData& company)
   {
     QDomElement el = createElement("NIF");
-    el.appendChild(createTextNode(company.cif));
+    el.appendChild(createTextNode(company.id));
     resetElement(recipientEl);
     recipientEl.appendChild(el);
     filter.appendChild(el);

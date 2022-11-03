@@ -3,8 +3,9 @@
 
 # include <QObject>
 # include <QTest>
+# include "helper_tbai_test.h"
 
-class TbaiInvoiceTest : public QObject
+class TbaiInvoiceTest : public QTicketBaiTest
 {
   Q_OBJECT
 private slots:

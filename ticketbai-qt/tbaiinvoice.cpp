@@ -1,5 +1,5 @@
 #include "tbaiinvoice.h"
-#include "companydata.h"
+#include "qticketbai.h"
 #include <QtXml>
 #include <QStandardPaths>
 #include <QTemporaryFile>
@@ -11,7 +11,7 @@ QByteArray TbaiInvoice::getId() const
   QChar   separator('-');
   QString out("TBAI");
   const auto&      signature = invoice.signature();
-  const QByteArray cifNumber = CompanyData::self.cif.toUtf8();
+  const QByteArray cifNumber = QTicketBai::user().id.toUtf8();
 
   out += separator;
   for (int i = 0 ; i < 9 && i < cifNumber.length() ; ++i)

@@ -10,7 +10,7 @@ public:
   QByteArray m_signature, m_series, m_number;
   QString m_name;
   Recipients m_recipients = Recipients{
-    CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", "A12345678", "0505050505", "0606060606", "12345", "e@ma.il"}
+    CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", NifIvaId, "A12345678", "0505050505", "0606060606", "12345", "e@ma.il"}
   };
 
   TbaiInvoiceInterface* previousInvoice() const override { return nullptr; }

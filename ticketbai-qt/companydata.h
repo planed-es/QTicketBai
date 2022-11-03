@@ -3,12 +3,23 @@
 
 # include <QString>
 
+enum TbaiIdentityType
+{
+  NifIvaId,
+  PassportId,
+  OficialIdentificationDocumentFromCountryOfResidenceId,
+  ResidenceCertificateId,
+  OtherSupportingDocumentId
+};
+
 struct CompanyData
 {
-  static const CompanyData self;
-  QString name, address, city, cif, phone, fax, postalCode, email;
+  QString          name, address, city;
+  TbaiIdentityType idType = NifIvaId;
+  QString          id, phone, fax, postalCode, email;
+  QByteArray       countryCode;
 
-  bool operator==(const CompanyData& other) const { return cif == other.cif; }
+  bool operator==(const CompanyData& other) const { return idType == other.idType && id == other.id; }
 };
 
 #endif

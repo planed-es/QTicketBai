@@ -1,6 +1,6 @@
 #include "tbaidocument.h"
 #include "invoiceinterface.h"
-#include "companydata.h"
+#include "qticketbai.h"
 #include <QUrl>
 #include <QFile>
 
@@ -29,6 +29,14 @@ static const QMap<TbaiInvoiceInterface::VatExemption, QByteArray> vatExemptionCo
   {TbaiInvoiceInterface::VatExempted,                           "E6"}
 };
 
+static const QMap<TbaiIdentityType, QByteArray> identityTypeCodes = {
+  {NifIvaId,                                              "02"},
+  {PassportId,                                            "03"},
+  {OficialIdentificationDocumentFromCountryOfResidenceId, "04"},
+  {ResidenceCertificateId,                                "05"},
+  {OtherSupportingDocumentId,                             "06"}
+};
+
 TbaiDocument::TbaiDocument()
 {
 
@@ -40,25 +48,50 @@ static QDomElement generateEmitterXml(QDomDocument& document, const TbaiInvoiceI
   QDomElement cifEl  = document.createElement("NIF");
   QDomElement nameEl = document.createElement("ApellidosNombreRazonSocial");
 
-  cifEl.appendChild(document.createTextNode(CompanyData::self.cif));
-  nameEl.appendChild(document.createTextNode(CompanyData::self.name));
+  cifEl.appendChild(document.createTextNode(QTicketBai::user().id));
+  nameEl.appendChild(document.createTextNode(QTicketBai::user().name));
   root.appendChild(cifEl);
   root.appendChild(nameEl);
   return root;
 }
 
+static QDomElement generateContactXml(QDomDocument& document, const CompanyData& contact)
+{
+  QDomElement idEl;
+
+  if (contact.idType == NifIvaId)
+  {
+    idEl = document.createElement("NIF");
+    idEl.appendChild(document.createTextNode(contact.id));
+  }
+  else
+  {
+    QDomElement idValueEl = document.createElement("ID");
+    QDomElement idTypeEl  = document.createElement("IDType");
+    QDomElement countryEl = document.createElement("CodigoPais");
+
+    idEl = document.createElement("IDOtro");
+    if (contact.countryCode.length() > 0)
+    {
+      countryEl.appendChild(document.createTextNode(contact.countryCode));
+      idEl.appendChild(countryEl);
+    }
+    idTypeEl.appendChild(document.createTextNode(identityTypeCodes[contact.idType]));
+    idValueEl.appendChild(document.createTextNode(contact.id));
+    idEl.appendChild(idTypeEl);
+    idEl.appendChild(idValueEl);
+  }
+  return idEl;
+}
+
 static QDomElement generateRecipientXml(QDomDocument& document, const CompanyData& recipient)
 {
-  const auto  cif         = recipient.cif;
-  const auto  name        = recipient.name;
   QDomElement recipientEl = document.createElement("IDDestinatario");
-  QDomElement cifEl       = document.createElement("NIF");
   QDomElement nameEl      = document.createElement("ApellidosNombreRazonSocial");
   QDomElement postalCodeEl= document.createElement("CodigoPostal");
 
-  cifEl.appendChild(document.createTextNode(cif));
-  nameEl.appendChild(document.createTextNode(name));
-  recipientEl.appendChild(cifEl);
+  recipientEl.appendChild(generateContactXml(document, recipient));
+  nameEl.appendChild(document.createTextNode(recipient.name));
   recipientEl.appendChild(nameEl);
   if (recipient.postalCode.length() > 0)
   {
@@ -238,21 +271,17 @@ static QDomElement generateSoftwareXml(QDomDocument& document)
   QDomElement root        = document.createElement("Software");
   QDomElement licenseEl   = document.createElement("LicenciaTBAI");
   QDomElement developerEl = document.createElement("EntidadDesarrolladora");
-  QDomElement cifEl       = document.createElement("NIF");
   QDomElement nameEl      = document.createElement("Nombre");
   QDomElement versionEl   = document.createElement("Version");
   QByteArray  license     = qgetenv("TBAI_LICENSE");
-  QByteArray  name        = qgetenv("TBAI_SOFTWARE_NAME");
-  QByteArray  cif         = qgetenv("TBAI_SOFTWARE_NIF");
 
   licenseEl.appendChild(document.createTextNode(license));
-  cifEl.appendChild(document.createTextNode(cif));
-  nameEl.appendChild(document.createTextNode(name));
+  nameEl.appendChild(document.createTextNode(QTicketBai::developer().name));
   versionEl.appendChild(document.createTextNode(TBAI_SOFTWARE_VERSION));
 
+  developerEl.appendChild(generateContactXml(document, QTicketBai::developer()));
   root.appendChild(licenseEl);
   root.appendChild(developerEl);
-    developerEl.appendChild(cifEl);
   root.appendChild(nameEl);
   root.appendChild(versionEl);
   return root;
@@ -363,7 +392,7 @@ static QString getDefaultFileNameFor(const TbaiInvoiceInterface& invoice)
   {
     const CompanyData& contact = invoice.recipients().first();
 
-    return QUrl::toPercentEncoding(contact.cif + '-' + contact.name, " ");
+    return QUrl::toPercentEncoding(contact.id + '-' + contact.name, " ");
   }
   return "unnamed";
 }

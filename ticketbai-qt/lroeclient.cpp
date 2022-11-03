@@ -1,5 +1,6 @@
 #include "lroeclient.h"
 #include "qcompressor.h"
+#include "qticketbai.h"
 #include "tbaicertificate.h"
 #include <QDebug>
 #include <QJsonObject>
@@ -27,7 +28,7 @@ LROEClient::LROEClient(const CompanyData& emitter, QObject* parent) : QObject(pa
 {
 }
 
-LROEClient::LROEClient(QObject* parent) : QObject(parent), emitter(CompanyData::self)
+LROEClient::LROEClient(QObject* parent) : QObject(parent), emitter(QTicketBai::user())
 {
 }
 
@@ -73,7 +74,7 @@ QNetworkReply* LROEClient::sendDocument(const LROEDocument& document)
 QJsonDocument LROEClient::jsonHeaderFor(const LROEDocument& document)
 {
   QJsonObject jsonHeader, jsonEmitter, jsonDrs;
-  QByteArray  cif       = emitter.cif.toUtf8();
+  QByteArray  cif       = emitter.id.toUtf8();
   QByteArray  name      = emitter.name.toUtf8();
   QByteArray  firstname = qgetenv("EUS_BIZKAIA_FIRSTNAME");
   QByteArray  lastname  = qgetenv("EUS_BIZKAIA_LASTNAME");

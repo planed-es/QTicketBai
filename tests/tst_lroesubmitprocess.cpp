@@ -16,7 +16,7 @@ QTEST_MAIN(LROESubmitProcessTest)
 
 void LROESubmitProcessTest::canSubmitExampleDocument()
 {
-  CompanyData testEmitter{"5YD5J4IYKM7QJJNDKVAPTFTF6A6QLU", "", "", "79732487C", "", "", "", ""};
+  CompanyData testEmitter{"5YD5J4IYKM7QJJNDKVAPTFTF6A6QLU", "", "", NifIvaId, "79732487C", "", "", "", ""};
   LROESubmitProcess           lroe(testEmitter);
   LROEDocument                document(LROEDocument::Model140, LROEDocument::AddOperation);
   LROESubmitProcess::Response response;
