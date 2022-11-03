@@ -11,17 +11,14 @@ public:
   typedef CompanyData Recipient;
   typedef QList<Recipient> Recipients;
 
-  enum VatExemption
-  {
-    NoVatExemption,
-    VatExemptedByNormaForalArticle20,
-    VatExemptedByNormaForalArticle21,
-    VatExemptedByNormaForalArticle22,
-    VatExemptedByNormaForalArticle23and24,
-    VatExemptedByNormaForalArticle25,
-    VatExempted
-  };
+  /*
+  * The following enums are transcriptions of the types described in the
+  * document "Especificaciones funcionales y técnicas del sistema TicketBAI"
+  * Annexo I, part II (page 15).
+  * https://www.batuz.eus/fitxategiak/batuz/normativa/2020%2009%2011%20ORDEN%20FORAL%201482-2020,%20de%209%20de%20septiembre.pdf
+  */
 
+  // L7
   enum Type
   {
     InvoiceType = 0,
@@ -35,8 +32,44 @@ public:
     CancelType
   };
 
+  // L9
+  enum VatRegime
+  {
+    DefaultRegime,
+    ExportationRegime,
+    UsedGoodsRegime,
+    GoldInvestmentRegime,
+    TravelAgencyRegime,
+    EntityGroupVatRegime,
+    FundCriteraRegime,
+    RelatedToIPSIOrIGICRegime,
+    ProxyTravelAgencyRegime,
+    CollectionsOnBehalfOfThirdPartiesOfProfessionalFeesOrRights,
+    LeasingOperationsOfBusinessPremisesSubjectToWithholding,
+    LeasingOperationsOfBusinessPremisesNotSubjectToWithholding,
+    LeasingOperationsOfBusinessPremises,
+    InvoiceWithVatPendingAccrualInWorkCertificationsWhoseRecipientIsAPublicAdministration,
+    InvoiceWithVatPendingAccrualInSuccessiveTractOperations,
+    OperationsInEquivalenceSurcharge,
+    OperationsInSimplifiedRegime,
+    OperationsCarriedOutByEntitiesNotConsideredBusinesspersonOrProfessionalsForVatPurposes
+  };
+
+  // L10
+  enum VatExemption
+  {
+    NoVatExemption,
+    VatExemptedByNormaForalArticle20,
+    VatExemptedByNormaForalArticle21,
+    VatExemptedByNormaForalArticle22,
+    VatExemptedByNormaForalArticle23and24,
+    VatExemptedByNormaForalArticle25,
+    VatExempted
+  };
+
   virtual TbaiInvoiceInterface* previousInvoice() const = 0;
   virtual Type                  invoiceType() const = 0;
+  virtual QList<VatRegime>      vatRegimes() const { return {DefaultRegime}; }
   virtual const QByteArray&     signature() const = 0;
   virtual const QDateTime&      date() const = 0;
   virtual const QByteArray&     series() const = 0;

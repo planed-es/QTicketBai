@@ -7,18 +7,26 @@
 #define TBAI_VERSION          "1.2"
 #define TBAI_SOFTWARE_VERSION "1.0"
 
-namespace VatPolicy
-{
-  static const QByteArray Default        = "01";
-  static const QByteArray Exportation    = "02";
-  static const QByteArray UsedGoods      = "03";
-  static const QByteArray GoldInvestment = "04";
-  static const QByteArray TravelAgency   = "05";
-  static const QByteArray EntityGroupVat = "06";
-  static const QByteArray FundCriteria   = "07";
-  static const QByteArray RelatedToIPSI  = "08";
-  static const QByteArray RelatedToIGIC  = RelatedToIPSI;
-}
+static const QMap<TbaiInvoiceInterface::VatRegime, QByteArray> vatRegimes = {
+  {TbaiInvoiceInterface::DefaultRegime,                                                                          "01"},
+  {TbaiInvoiceInterface::ExportationRegime,                                                                      "02"},
+  {TbaiInvoiceInterface::UsedGoodsRegime,                                                                        "03"},
+  {TbaiInvoiceInterface::GoldInvestmentRegime,                                                                   "04"},
+  {TbaiInvoiceInterface::TravelAgencyRegime,                                                                     "05"},
+  {TbaiInvoiceInterface::EntityGroupVatRegime,                                                                   "06"},
+  {TbaiInvoiceInterface::FundCriteraRegime,                                                                      "07"},
+  {TbaiInvoiceInterface::RelatedToIPSIOrIGICRegime,                                                              "08"},
+  {TbaiInvoiceInterface::ProxyTravelAgencyRegime,                                                                "09"},
+  {TbaiInvoiceInterface::CollectionsOnBehalfOfThirdPartiesOfProfessionalFeesOrRights,                            "10"},
+  {TbaiInvoiceInterface::LeasingOperationsOfBusinessPremisesSubjectToWithholding,                                "11"},
+  {TbaiInvoiceInterface::LeasingOperationsOfBusinessPremisesNotSubjectToWithholding,                             "12"},
+  {TbaiInvoiceInterface::LeasingOperationsOfBusinessPremises,                                                    "13"},
+  {TbaiInvoiceInterface::InvoiceWithVatPendingAccrualInWorkCertificationsWhoseRecipientIsAPublicAdministration,  "14"},
+  {TbaiInvoiceInterface::InvoiceWithVatPendingAccrualInSuccessiveTractOperations,                                "15"},
+  {TbaiInvoiceInterface::OperationsInEquivalenceSurcharge,                                                       "51"},
+  {TbaiInvoiceInterface::OperationsInSimplifiedRegime,                                                           "52"},
+  {TbaiInvoiceInterface::OperationsCarriedOutByEntitiesNotConsideredBusinesspersonOrProfessionalsForVatPurposes, "53"}
+};
 
 static const QMap<TbaiInvoiceInterface::VatExemption, QByteArray> vatExemptionCodes = {
   {TbaiInvoiceInterface::VatExemptedByNormaForalArticle20,      "E1"},
@@ -170,14 +178,18 @@ static QDomElement generateInvoiceData(QDomDocument& document, const TbaiInvoice
   QDomElement descriptionEl = document.createElement("DescripcionFactura");
   QDomElement amountEl      = document.createElement("ImporteTotalFactura");
   QDomElement keysEl        = document.createElement("Claves");
-  QDomElement keyEl         = document.createElement("IDClave");
-  QDomElement vatEl         = document.createElement("ClaveRegimenIvaOpTrascendencia");
 
   descriptionEl.appendChild(document.createTextNode(invoice.description().toUtf8()));
   amountEl.appendChild(document.createTextNode(invoice.formattedAmount()));
-  keysEl.appendChild(keyEl);
-    keyEl.appendChild(vatEl);
-      vatEl.appendChild(document.createTextNode(VatPolicy::Default));
+  for (auto vatRegime : invoice.vatRegimes())
+  {
+    QDomElement keyEl       = document.createElement("IDClave");
+    QDomElement vatRegimeEl = document.createElement("ClaveRegimenIvaOpTrascendencia");
+
+    vatRegimeEl.appendChild(document.createTextNode(vatRegimes[vatRegime]));
+    keyEl.appendChild(vatRegimeEl);
+    keysEl.appendChild(keyEl);
+  }
   root.appendChild(descriptionEl);
   root.appendChild(amountEl);
   root.appendChild(keysEl);
