@@ -10,6 +10,7 @@ class TbaiInvoiceInterface
 public:
   typedef CompanyData Recipient;
   typedef QList<Recipient> Recipients;
+  typedef QList<TbaiInvoiceInterface*> TbaiInvoices;
 
   /*
   * The following enums are transcriptions of the types described in the
@@ -68,6 +69,7 @@ public:
   };
 
   virtual TbaiInvoiceInterface* previousInvoice() const = 0;
+  virtual TbaiInvoices          correctedInvoices() const { return {}; }
   virtual Type                  invoiceType() const = 0;
   virtual QList<VatRegime>      vatRegimes() const { return {DefaultRegime}; }
   virtual const QByteArray&     signature() const = 0;

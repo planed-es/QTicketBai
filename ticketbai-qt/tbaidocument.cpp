@@ -145,8 +145,36 @@ static QDomElement generateCorrectionInvoiceHeader(QDomDocument& document, const
   QDomElement typeEl = document.createElement("Tipo");
 
   codeEl.appendChild(document.createTextNode(getCodeForInvoiceType(invoice.invoiceType())));
-  codeEl.appendChild(document.createTextNode("S")); // S for Substitution, I for difference
-  // Missing element(s): ImporteRectificacion and Sustitutiva, or ImporteRectificacionSustitutiva
+  typeEl.appendChild(document.createTextNode("S")); // S for Substitution, I for difference
+  // Missing optional element(s): ImporteRectificacion and Sustitutiva, or ImporteRectificacionSustitutiva
+  return root;
+}
+
+static QDomElement generateInvoiceSubstitutionId(QDomDocument& document, const TbaiInvoiceInterface& invoice)
+{
+  QDomElement root     = document.createElement("IDFacturaRectificatidaSustituida");
+  QDomElement seriesEl = document.createElement("SerieFactura");
+  QDomElement numberEl = document.createElement("NumFactura");
+  QDomElement dateEl   = document.createElement("FechaExpedicionFactura");
+
+  if (invoice.series().length() > 0)
+  {
+    seriesEl.appendChild(document.createTextNode(invoice.series()));
+    root.appendChild(seriesEl);
+  }
+  numberEl.appendChild(document.createTextNode(invoice.number()));
+  dateEl.appendChild(document.createTextNode(invoice.date().toString("dd-MM-yyyy")));
+  root.appendChild(numberEl);
+  root.appendChild(dateEl);
+  return root;
+}
+
+static QDomElement generateCorrectedInvoiceListHeader(QDomDocument& document, const TbaiInvoiceInterface& invoice)
+{
+  QDomElement root = document.createElement("FacturasRectificativasSustituidas");
+
+  for (const auto* correctedInvoice : invoice.correctedInvoices())
+    root.appendChild(generateInvoiceSubstitutionId(document, *correctedInvoice));
   return root;
 }
 
@@ -168,7 +196,11 @@ static QDomElement generateInvoiceHeader(QDomDocument& document, const TbaiInvoi
   root.appendChild(dateEl);
   root.appendChild(hourEl);
   if (invoice.invoiceType() != TbaiInvoiceInterface::InvoiceType)
+  {
     root.appendChild(generateCorrectionInvoiceHeader(document, invoice));
+    if (invoice.correctedInvoices().size() > 0)
+      root.appendChild(generateCorrectedInvoiceListHeader(document, invoice));
+  }
   return root;
 }
 
