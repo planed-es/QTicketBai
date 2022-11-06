@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 echo "" > .test-log
 for test_bin_dir in "$@" ; do
