@@ -11,8 +11,24 @@
 #include "helper_invoice.h"
 #include <qcurl.h>
 #include <iostream>
+#include <random>
 
 QTEST_MAIN(LROESubmitProcessTest)
+
+QByteArray getRandomString()
+{
+ const QByteArray possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+ const int randomStringLength = 12; // assuming you want random strings of 12 characters
+
+ QByteArray randomString;
+ for(int i=0; i<randomStringLength; ++i)
+ {
+   int index = rand() % possibleCharacters.length();
+   auto nextChar = possibleCharacters.at(index);
+   randomString.push_back(nextChar);
+ }
+ return randomString;
+}
 
 void LROESubmitProcessTest::canSubmitExampleDocument()
 {
@@ -59,7 +75,7 @@ void LROESubmitProcessTest::canGenerateInvoices()
   InvoiceTest invoice;
   QNetworkReply* reply;
 
-  invoice.m_number = "1";
+  invoice.m_number = getRandomString();
   invoice.m_name = "Parrot sale";
   auto xml = TbaiSignProcess::sign(
     TbaiDocument().createFrom(invoice)
@@ -70,8 +86,52 @@ void LROESubmitProcessTest::canGenerateInvoices()
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   qDebug() << response;
+  std::cout << "Response:\n";
   std::cout << response.document.toString(2).toStdString() << std::endl;
+  std::cout << "Document:\n" << xml.toStdString() << std::endl;
   QCOMPARE(response.status, 200);
+  QCOMPARE(response.type, "Correcto");
+}
+
+void LROESubmitProcessTest::canChainInvoices()
+{
+  LROESubmitProcess           lroe;
+  TbaiUploadDocument          document(LROEDocument::Model240);
+  LROESubmitProcess::Response response;
+  QString invoiceXml;
+  InvoiceTest invoice, invoice2;
+  QNetworkReply* reply;
+
+  invoice.m_number = getRandomString();
+  invoice.m_name = "Parrot sale";
+  invoice2.m_number = getRandomString();
+  invoice2.m_name = "Bird sale";
+  invoice2.m_previousInvoice = &invoice;
+  auto result = TbaiSignProcess::sign(
+    TbaiDocument().createFrom(invoice)
+  );
+  invoice.m_signature = result.signature;
+  QVERIFY(invoice.signature().length() > 0);
+  QVERIFY(result.xml.length() > 0);
+  auto result2 = TbaiSignProcess::sign(
+    TbaiDocument().createFrom(invoice2)
+  );
+  invoice2.m_signature = result2.signature;
+  QVERIFY(invoice2.signature().length() > 0);
+  QVERIFY(result2.xml.length() > 0);
+  document.setActivityYear(2022);
+  document.appendInvoice(result.xml);
+  document.appendInvoice(result2.xml);
+
+  reply = lroe.sendDocument(document);
+  response = lroe.parseResponse(reply);
+  qDebug() << response;
+  std::cout << "Response:\n";
+  std::cout << response.document.toString(2).toStdString() << std::endl;
+  std::cout << "DocumentA:\n" << result.xml.toStdString() << std::endl;
+  std::cout << "DocumentB:\n" << result2.xml.toStdString() << std::endl;
+  QCOMPARE(response.status, 200);
+  QCOMPARE(response.type, "Correcto");
 }
 
 void LROESubmitProcessTest::canQueryInvoices()
@@ -86,4 +146,5 @@ void LROESubmitProcessTest::canQueryInvoices()
   response = lroe.parseResponse(reply);
   qDebug() << response;
   QCOMPARE(response.status, 200);
+  QCOMPARE(response.type, "Correcto");
 }

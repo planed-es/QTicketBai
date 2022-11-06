@@ -194,11 +194,46 @@ public:
   // Returns the list of recipients for this invoice, represented as
   // CompanyData (see ticketbai-qt/companydata.h)
   const Recipients& recipients() const override;
+
+  // Returns a list of the invoice amounts for each included VATs policies
+  QList<TbaiInvoiceInterface::VatBreakdown> vatBreakdowns() const override;
 };
 ```
 
 The convenience `TbaiInvoiceComponent` class is also available in `ticketbai-qt/invoicecomponent.h`,
 providing a simple QObject-based implementation for `TbaiInvoiceInterface`.
+
+##### Invoice amounts using VatBreakdown
+
+The `TbaiInvoiceInterface::VatBreakdown` type allows you to define invoice amounts for each VAT
+policy. Any couple VAT policy and VAT/Recargo rate can only be expressed up to one time in the resulting list.
+Let's see a simple example:
+
+```
+TbaiInvoiceInterface::VatBreakdown vatBreakdown;
+
+vatBreakdown.base = 42.42; // tax base
+vatBreakdown.taxRate = 0.2; // VAT rate at 20%
+vatBreakdown.recargoRate = 0.014; // Recargo rate at 1.4%
+```
+
+For VAT exempted subjets, we would change that code as following:
+
+```
+TbaiInvoiceInterface::VatBreakdown vatBreakdown;
+
+vatBreakdown.base = 42.42; // tax base
+vatBreakdown.exemptionType = TbaiInvoiceInterface::VatExemptedByNormaForalArticle20;
+```
+
+And for subjects that are not subjects to VAT:
+
+```
+TbaiInvoiceInterface::VatBreakdown vatBreakdown;
+
+vatBreakdown.base = 42.42;
+vatBreakdown.vatState = TbaiInvoiceInterface::NotSubjectToVat;
+```
 
 #### Generating a TicketBAI signature for an invoice
 Now that we can expose our custom invoices types to QTicketBai, the next thing we'll

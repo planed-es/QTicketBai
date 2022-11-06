@@ -1,7 +1,10 @@
 #include "helper_tbai_test.h"
+#include <QDateTime>
+#include <random>
 
 void QTicketBaiTest::initTestCase()
 {
+ srand(QDateTime::currentMSecsSinceEpoch());
   ticketbai
     .withUser(CompanyData{
       "5Yd5j4iyKM7qjJnDKVAptFTF6A6qLu",

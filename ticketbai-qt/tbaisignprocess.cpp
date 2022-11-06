@@ -63,14 +63,15 @@ TbaiSignProcess::ReturnValue TbaiSignProcess::sign(TbaiDocument& document)
   xadesObject.signedProperties().signatureProperties()
     .useSigningTime()
     .signingCertificate()
-      .useDigestAlgorithm(QCryptographicHash::Sha512)
+      .useV2()
+      .useDigestAlgorithm(QCryptographicHash::Sha256)
       .useCertificate(TbaiCertificate::certificate);
 
   xadesObject.signedProperties().signatureProperties()
     .signaturePolicyIdentifier()
       .useIdentifier(specificationPdf)
       .useDigestAlgorithm(QCryptographicHash::Sha256)
-      .useDigestValue("Quzn98x3PMbSHwbUzaj5f5KOpiH0u8bvmwbbbNkO9Es")
+      .useDigestValue("Quzn98x3PMbSHwbUzaj5f5KOpiH0u8bvmwbbbNkO9Es=")
       .addQualifier(
         QXadesSignaturePolicyQualifier().useUrl(specificationPdf)
       );
@@ -123,6 +124,7 @@ TbaiSignProcess::ReturnValue TbaiSignProcess::sign(TbaiDocument& document)
   if (signer.sign())
   {
     document.loadFrom(signer.toString().toUtf8());
+    retval.signature = document.signature();
     retval.xml = signer.toString().toUtf8();
   }
   else

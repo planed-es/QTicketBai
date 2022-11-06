@@ -18,9 +18,6 @@ class TICKETBAIQT_EXPORT TbaiInvoiceComponent : public QObject, public TbaiInvoi
   Q_PROPERTY(QByteArray   number READ number WRITE setNumber NOTIFY numberChanged)
   Q_PROPERTY(QString      name READ name WRITE setName NOTIFY nameChanged)
   Q_PROPERTY(QString      description READ description WRITE setDescription NOTIFY descriptionChanged)
-  Q_PROPERTY(double       amount READ amount WRITE setAmount NOTIFY amountChanged)
-  Q_PROPERTY(QByteArray   formattedAmount READ formattedAmount NOTIFY amountChanged)
-  Q_PROPERTY(VatExemption vatExemption READ vatExemption WRITE setVatExemption NOTIFY vatExemptionChanged)
 public:
   explicit TbaiInvoiceComponent(QObject* parent = nullptr) : QObject(parent) {}
 
@@ -47,16 +44,14 @@ public:
   const QString& description() const override { return m_description; }
   void setDescription(const QString& val) { m_description = val; emit descriptionChanged(); }
 
-  double amount() const override { return m_amount; }
-  void setAmount(double val) { m_amount = val; emit amountChanged(); }
-
-  const Recipients& recipients() const { return m_recipients; }
+  const Recipients& recipients() const override { return m_recipients; }
   void addRecipient(const Recipient& val) { m_recipients << val; emit recipientsChanged(); }
   void removeRecipient(const Recipient& val) { m_recipients.removeAll(val); emit recipientsChanged(); }
   void setRecipients(const Recipients& val) { m_recipients = val; emit recipientsChanged(); }
 
-  VatExemption vatExemption() const { return m_vatExemption; }
-  void setVatExemption(VatExemption val) { m_vatExemption = val; emit vatExemptionChanged(); }
+  QList<VatBreakdown> vatBreakdowns() const override { return m_vatBreakdowns; }
+  void addVatBreakdown(const VatBreakdown& val) { m_vatBreakdowns << val; emit vatBreakdownsChanged(); }
+  void setVatBreakdowns(const QList<VatBreakdown>& val) { m_vatBreakdowns = val; emit vatBreakdownsChanged(); }
 
 signals:
   void invoiceTypeChanged();
@@ -66,18 +61,16 @@ signals:
   void numberChanged();
   void nameChanged();
   void descriptionChanged();
-  void amountChanged();
   void recipientsChanged();
-  void vatExemptionChanged();
+  void vatBreakdownsChanged();
 
 private:
-  Type         m_invoiceType;
-  QByteArray   m_signature, m_number, m_series;
-  QString      m_name, m_description;
-  QDateTime    m_date;
-  double       m_amount = 0;
-  Recipients   m_recipients;
-  VatExemption m_vatExemption = NoVatExemption;
+  Type                  m_invoiceType;
+  QByteArray            m_signature, m_number, m_series;
+  QString               m_name, m_description;
+  QDateTime             m_date;
+  Recipients            m_recipients;
+  QList<VatBreakdown>   m_vatBreakdowns;
   TbaiInvoiceInterface* m_previousInvoice = nullptr;
 };
 

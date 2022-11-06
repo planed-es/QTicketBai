@@ -11,7 +11,14 @@ static QSharedPointer<TbaiInvoiceComponent> testInvoice()
   invoice->setDate(QDateTime::fromString("2022-12-25T04:10:24", Qt::ISODate));
   invoice->setSignature("DSI1XA1ErCoqaEln++216eTQpN0qF7HQb/I3QhF54V11LEGY3ucMVH33GceRE9LtYJI7AoI0YS3q0qPOn+eTlH6ZHVXXkcVZyi2gBZcuCKqRiRzSiuS0MazDgYqBdrDWhAIByP6AJ2vRhxhZceACeHFNzfmjeDpjX01cUox/RFT//C4cUOuTWADlkq/PqEN0dK/UQbZEOssk4diIlCeYU/exVYoRIpkE9OcFrlwOJv/UJ3ezBlL9pd/6G5rhNMtwqnPXLkbBq993uuVCU2SeKi79HuAa/gCvHlFwrjhwJV6VgcGhPylJ67xJk6dq+ukSW2s6kI4OgauH4SzYUaICAQ==");
   invoice->setNumber("FAC23");
-  invoice->setAmount(7561);
+  invoice->setVatBreakdowns({
+    TbaiInvoiceInterface::VatBreakdown{
+      TbaiInvoiceInterface::VatExemptedDueToLocalization,
+      TbaiInvoiceInterface::NoVatExemption,
+      TbaiInvoiceInterface::WithoutInversionOfPassiveSubject,
+      7561
+    }
+  });
   return invoice;
 }
 

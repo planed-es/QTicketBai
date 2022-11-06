@@ -10,6 +10,7 @@ private slots:
   void canSubmitExampleDocument();
   void canSubmitInvoice();
   void canGenerateInvoices();
+  void canChainInvoices();
   void canQueryInvoices();
 };
 

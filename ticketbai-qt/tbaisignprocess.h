@@ -20,7 +20,7 @@ public:
     ReturnValue(QString param = QString()) : error(param) {}
     operator bool() const { return error.isNull(); }
     QString error;
-    QByteArray xml;
+    QByteArray xml, signature;
   };
 
   static ReturnValue sign(TbaiDocument&);

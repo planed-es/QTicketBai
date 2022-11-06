@@ -228,62 +228,155 @@ static QDomElement generateInvoiceData(QDomDocument& document, const TbaiInvoice
   return root;
 }
 
-static QDomElement generateVatInvoiceBreakdown(QDomDocument& document, const TbaiInvoiceInterface& invoice)
-{
-  QDomElement root          = document.createElement("DetalleNoExenta");
-  QDomElement typeEl        = document.createElement("TipoNoExenta");
-  QDomElement vatEl         = document.createElement("DesgloseIVA");
-  QDomElement vatDetailEl   = document.createElement("DetalleIVA");
-  QDomElement taxableBaseEl = document.createElement("BaseImponible");
+static const QMap<TbaiInvoiceInterface::NotSubjectToVatReason, QString> notSubjectToVatReasons = {
+  {TbaiInvoiceInterface::VatExemptedByNormaForalArticle7, "OT"},
+  {TbaiInvoiceInterface::VatExemptedDueToLocalization,    "RL"}
+};
 
-  // S1 -> Sin inversión del sujeto pasivo
-  // S2 -> Con inversión del sujeto pasivo
-  typeEl.appendChild(document.createTextNode("S1"));
-  taxableBaseEl.appendChild(document.createTextNode(invoice.taxBaseAmount()));
-  root.appendChild(typeEl);
-  root.appendChild(vatEl);
-  vatEl.appendChild(vatDetailEl);
-  vatDetailEl.appendChild(taxableBaseEl);
-  return root;
+static const QMap<TbaiInvoiceInterface::NonExemptedVatType, QByteArray> nonExemptedVatTypes = {
+  {TbaiInvoiceInterface::WithInversionOfPassiveSubject,    "S2"},
+  {TbaiInvoiceInterface::WithoutInversionOfPassiveSubject, "S1"}
+};
+
+static QDomElement generateVatDetailsForNonSubjectToVat(QDomDocument& document, const TbaiInvoiceInterface::VatBreakdown& breakdown)
+{
+  QDomElement detailEl = document.createElement("DetalleNoSujeta");
+  QDomElement reasonEl = document.createElement("Causa");
+  QDomElement amountEl = document.createElement("Importe");
+
+  reasonEl.appendChild(document.createTextNode(notSubjectToVatReasons[breakdown.vatState]));
+  amountEl.appendChild(document.createTextNode(QString::number(breakdown.total(), 'f', 2)));
+  detailEl.appendChild(reasonEl);
+  detailEl.appendChild(amountEl);
+  return detailEl;
+}
+
+static QDomElement generateVatDetailsForExemptedToVat(QDomDocument& document, const TbaiInvoiceInterface::VatBreakdown& breakdown)
+{
+  QDomElement detailEl = document.createElement("DetalleExenta");
+  QDomElement reasonEl = document.createElement("CausaExencion");
+  QDomElement amountEl = document.createElement("BaseImponible");
+
+  reasonEl.appendChild(document.createTextNode(vatExemptionCodes[breakdown.exemptionType]));
+  amountEl.appendChild(document.createTextNode(QString::number(breakdown.total(), 'f', 2)));
+  detailEl.appendChild(reasonEl);
+  detailEl.appendChild(amountEl);
+  return detailEl;
+}
+
+static QDomElement generateVatDetails(QDomDocument& document, const TbaiInvoiceInterface::VatBreakdown& breakdown)
+{
+  QDomElement detailEl      = document.createElement("DetalleIVA");
+  QDomElement baseEl        = document.createElement("BaseImponible");
+  QDomElement taxRateEl     = document.createElement("TipoImpositivo");
+  QDomElement taxFeeEl      = document.createElement("CuotaImpuesto");
+  QDomElement recargoRateEl = document.createElement("TipoRecargoEquivalencia");
+  QDomElement recargoFeeEl  = document.createElement("CuotaRecargoEquivalencia");
+  QDomElement recargoModeEl = document.createElement("OperacionEnRecargoDeEquivalenciaORegimenSimplificado");
+
+  baseEl       .appendChild(document.createTextNode(QString::number(breakdown.base, 'f', 2)));
+  taxRateEl    .appendChild(document.createTextNode(QString::number(breakdown.taxRate * 100, 'f', 2)));
+  taxFeeEl     .appendChild(document.createTextNode(QString::number(breakdown.taxFee(), 'f', 2)));
+  recargoRateEl.appendChild(document.createTextNode(QString::number(breakdown.recargoRate * 100, 'f', 2)));
+  recargoFeeEl .appendChild(document.createTextNode(QString::number(breakdown.recargoFee(), 'f', 2)));
+  recargoModeEl.appendChild(document.createTextNode(breakdown.recargoSimplifiedRegime ? "Y" : "N"));
+  detailEl.appendChild(baseEl);
+  detailEl.appendChild(taxRateEl);
+  detailEl.appendChild(taxFeeEl);
+  detailEl.appendChild(recargoRateEl);
+  detailEl.appendChild(recargoFeeEl);
+  detailEl.appendChild(recargoModeEl);
+  return detailEl;
+}
+
+static QList<TbaiInvoiceInterface::VatBreakdown> breakdownWithVat(const TbaiInvoiceInterface& invoice)
+{
+  QList<TbaiInvoiceInterface::VatBreakdown> result;
+
+  for (const TbaiInvoiceInterface::VatBreakdown& breakdown : invoice.vatBreakdowns())
+  {
+    if (breakdown.vatState == TbaiInvoiceInterface::SubjectToVat && breakdown.exemptionType == TbaiInvoiceInterface::NoVatExemption)
+      result << breakdown;
+  }
+  return result;
+}
+
+static QList<TbaiInvoiceInterface::VatBreakdown> breakdownNotSubjectToVat(const TbaiInvoiceInterface& invoice)
+{
+  QList<TbaiInvoiceInterface::VatBreakdown> result;
+
+  for (const TbaiInvoiceInterface::VatBreakdown& breakdown : invoice.vatBreakdowns())
+  {
+    if (breakdown.vatState != TbaiInvoiceInterface::SubjectToVat)
+      result << breakdown;
+  }
+  return result;
+}
+
+static QList<TbaiInvoiceInterface::VatBreakdown> breakdownWithExemptedVat(const TbaiInvoiceInterface& invoice)
+{
+  QList<TbaiInvoiceInterface::VatBreakdown> result;
+
+  for (const TbaiInvoiceInterface::VatBreakdown& breakdown : invoice.vatBreakdowns())
+  {
+    if (breakdown.vatState == TbaiInvoiceInterface::SubjectToVat && breakdown.exemptionType != TbaiInvoiceInterface::NoVatExemption)
+      result << breakdown;
+  }
+  return result;
 }
 
 static QDomElement generateInvoiceBreakdown(QDomDocument& document, const TbaiInvoiceInterface& invoice)
 {
   QDomElement root = document.createElement("TipoDesglose");
   QDomElement wrapper = document.createElement("DesgloseFactura");
-  QDomElement subjectEl;
 
-  if (invoice.isSubjectToVat())
+  if (breakdownNotSubjectToVat(invoice).size())
   {
-    QDomElement exemptionEl;
+    QDomElement notSubjectEl = document.createElement("NoSujeta");
 
-    subjectEl = document.createElement("Sujeta");
-    switch (invoice.vatExemption())
+    for (const TbaiInvoiceInterface::VatBreakdown& breakdown : breakdownNotSubjectToVat(invoice))
+      notSubjectEl.appendChild(generateVatDetailsForNonSubjectToVat(document, breakdown));
+    wrapper.appendChild(notSubjectEl);
+  }
+  if (breakdownWithVat(invoice).size() > 0 || breakdownWithExemptedVat(invoice).size() > 0)
+  {
+    QDomElement subjectEl = document.createElement("Sujeta");
+
+    if (breakdownWithVat(invoice).size())
     {
-    case TbaiInvoiceInterface::NoVatExemption:
-      exemptionEl = document.createElement("NoExenta");
-      exemptionEl.appendChild(generateVatInvoiceBreakdown(document, invoice));
-      break ;
-    default:
-      exemptionEl = document.createElement("Exenta");
-      throw std::runtime_error("Tax exemption not implemented in TbaiDocument");
-    }
-    subjectEl.appendChild(exemptionEl);
-  }
-  else
-  {
-    QDomElement notSubjectEl = document.createElement("DetalleNoSujeta");
-    QDomElement causeEl      = document.createElement("Causa");
-    QDomElement amountEl     = document.createElement("Importe");
+      QDomElement notExemptedEl = document.createElement("NoExenta");
 
-    causeEl.appendChild(document.createTextNode(invoice.notSubjectToVatReason().toUtf8()));
-    amountEl.appendChild(document.createTextNode(invoice.formattedAmount()));
-    subjectEl = document.createElement("NoSujeta");
-    subjectEl.appendChild(notSubjectEl);
-    notSubjectEl.appendChild(causeEl);
-    notSubjectEl.appendChild(amountEl);
+      for (auto it = nonExemptedVatTypes.begin() ; it != nonExemptedVatTypes.end() ; ++it)
+      {
+        QDomElement breakdownRoot  = document.createElement("DetalleNoExenta");
+        QDomElement typeEl         = document.createElement("TipoNoExenta");
+        QDomElement breakdownVatEl = document.createElement("DesgloseIVA");
+
+        typeEl.appendChild(document.createTextNode(it.value()));
+        for (const TbaiInvoiceInterface::VatBreakdown& breakdown : breakdownWithVat(invoice))
+        {
+          if (breakdown.nonExemptedType == it.key())
+            breakdownVatEl.appendChild(generateVatDetails(document, breakdown));
+        }
+        if (!breakdownVatEl.lastChild().isNull())
+        {
+          breakdownRoot.appendChild(typeEl);
+          breakdownRoot.appendChild(breakdownVatEl);
+          notExemptedEl.appendChild(breakdownRoot);
+        }
+      }
+      subjectEl.appendChild(notExemptedEl);
+    }
+    if (breakdownWithExemptedVat(invoice).size())
+    {
+      QDomElement exemptedEl = document.createElement("Exenta");
+
+      for (const TbaiInvoiceInterface::VatBreakdown& breakdown : breakdownWithExemptedVat(invoice))
+        exemptedEl.appendChild(generateVatDetailsForExemptedToVat(document, breakdown));
+      subjectEl.appendChild(exemptedEl);
+    }
+    wrapper.appendChild(subjectEl);
   }
-  wrapper.appendChild(subjectEl);
   root.appendChild(wrapper);
   return root;
 }
@@ -303,7 +396,7 @@ static QDomElement generatePreviousInvoiceXml(QDomDocument& document, const Tbai
   }
   numberEl.appendChild(document.createTextNode(invoice.number()));
   dateEl.appendChild(document.createTextNode(invoice.date().toString("dd-MM-yyyy")));
-  signatureEl.appendChild(document.createTextNode(invoice.signature()));
+  signatureEl.appendChild(document.createTextNode(invoice.signature().left(100)));
   root.appendChild(numberEl);
   root.appendChild(dateEl);
   root.appendChild(signatureEl);
@@ -374,7 +467,7 @@ TbaiDocument& TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
   invoiceEl.appendChild(generateInvoiceBreakdown(*this, invoice));
   root.appendChild(invoiceEl);
   if (invoice.previousInvoice())
-    root.appendChild(generatePreviousInvoiceXml(*this, *invoice.previousInvoice()));
+    footPrintEl.appendChild(generatePreviousInvoiceXml(*this, *invoice.previousInvoice()));
   footPrintEl.appendChild(generateSoftwareXml(*this));
   footPrintEl.appendChild(deviceIdEl);
   root.appendChild(footPrintEl);

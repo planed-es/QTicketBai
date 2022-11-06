@@ -6,14 +6,25 @@
 class InvoiceTest : public TbaiInvoiceInterface
 {
 public:
+  TbaiInvoiceInterface* m_previousInvoice = nullptr;
   QDateTime m_date = QDateTime::currentDateTime();
   QByteArray m_signature, m_series, m_number;
   QString m_name;
   Recipients m_recipients = Recipients{
-    CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", NifIvaId, "A12345678", "0505050505", "0606060606", "12345", "e@ma.il"}
+    CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", NifIvaId, "U39072079", "0505050505", "0606060606", "12345", "e@ma.il"}
+  };
+  QList<VatBreakdown> m_breakdowns = QList<VatBreakdown>{
+    VatBreakdown{
+      SubjectToVat,
+      NoVatExemption,
+      WithoutInversionOfPassiveSubject,
+      42.42,
+      0.21,
+      0.014
+    }
   };
 
-  TbaiInvoiceInterface* previousInvoice() const override { return nullptr; }
+  TbaiInvoiceInterface* previousInvoice() const override { return m_previousInvoice; }
   Type invoiceType() const override { return InvoiceType; }
   const QByteArray& signature() const override { return m_signature; }
   const QDateTime&  date() const override { return m_date; }
@@ -21,9 +32,9 @@ public:
   const QByteArray& number() const override { return m_number; }
   const QString&    name() const override { return m_name; }
   const QString&    description() const override { return m_name; }
-  double            amount() const override { return 42.42; }
-  QString           notSubjectToVatReason() const override { return ""; }
+  double            amount() const override { return 23; }
   const Recipients& recipients() const override { return m_recipients; }
+  QList<VatBreakdown> vatBreakdowns() const override { return m_breakdowns; }
 };
 
 #endif

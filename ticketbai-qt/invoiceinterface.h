@@ -68,23 +68,55 @@ public:
     VatExempted
   };
 
+  // L11
+  enum NonExemptedVatType
+  {
+    WithInversionOfPassiveSubject,
+    WithoutInversionOfPassiveSubject
+  };
+
+  // L13
+  enum NotSubjectToVatReason
+  {
+    SubjectToVat,
+    VatExemptedByNormaForalArticle7,
+    VatExemptedDueToLocalization
+  };
+
+  struct VatBreakdown
+  {
+    NotSubjectToVatReason vatState        = SubjectToVat;
+    VatExemption          exemptionType   = NoVatExemption;
+    NonExemptedVatType    nonExemptedType = WithoutInversionOfPassiveSubject;
+    double                base            = 0;
+    double                taxRate         = 0;
+    double                recargoRate     = 0;
+    bool                  recargoSimplifiedRegime = false;
+    double                taxFee()     const { return base * taxRate; }
+    double                recargoFee() const { return base * recargoRate; }
+    double                total()      const { return base + taxFee() + recargoFee(); }
+  };
+
   virtual TbaiInvoiceInterface* previousInvoice() const = 0;
   virtual TbaiInvoices          correctedInvoices() const { return {}; }
   virtual Type                  invoiceType() const = 0;
   virtual QList<VatRegime>      vatRegimes() const { return {DefaultRegime}; }
+  virtual QList<VatBreakdown>   vatBreakdowns() const = 0;
   virtual const QByteArray&     signature() const = 0;
   virtual const QDateTime&      date() const = 0;
   virtual const QByteArray&     series() const = 0;
   virtual const QByteArray&     number() const = 0;
   virtual const QString&        name() const = 0;
   virtual const QString&        description() const = 0;
-  virtual double                amount() const = 0;
-  QByteArray                    formattedAmount() const { return QByteArray::number(amount(), 'f', 2); }
-  virtual QByteArray            taxBaseAmount() const { return formattedAmount(); }
   virtual const Recipients&     recipients() const = 0;
-  virtual VatExemption          vatExemption() const { return NoVatExemption; }
-  virtual bool                  isSubjectToVat() const { return notSubjectToVatReason().isEmpty(); }
-  virtual QString               notSubjectToVatReason() const { return QString(); }
+  virtual QString               formattedAmount() const { return QString::number(amount(), 'f', 2); }
+  virtual double                amount() const
+  {
+    double total = 0;
+    for (const VatBreakdown& breakdown : vatBreakdowns())
+      total += breakdown.total();
+    return total;
+  }
 };
 
 #endif
