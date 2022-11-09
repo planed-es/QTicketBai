@@ -134,6 +134,45 @@ void LROESubmitProcessTest::canChainInvoices()
   QCOMPARE(response.type, "Correcto");
 }
 
+void LROESubmitProcessTest::canRectifyInvoices()
+{
+  LROESubmitProcess    lroe;
+  LROEUploadDocument   document(LROEDocument::Model240);
+  LROEClient::Response response;
+  QString invoiceXml;
+  InvoiceTest invoice;
+  InvoiceCorrectionTest invoice2;
+  QNetworkReply* reply;
+
+  invoice.m_number = getRandomString();
+  invoice.m_name = "Parrot sale";
+  invoice2.m_series = "SERIE01";
+  invoice2.m_number = getRandomString();
+  invoice2.m_name = "Parrot sale correction";
+  invoice2.m_previousInvoice = &invoice;
+  invoice2.m_corrected << &invoice;
+  auto result = TbaiSignProcess::sign(
+    TbaiDocument().createFrom(invoice)
+  );
+  invoice.m_signature = result.signature;
+  QVERIFY(invoice.signature().length() > 0);
+  QVERIFY(result.xml.length() > 0);
+  auto result2 = TbaiSignProcess::sign(
+    TbaiDocument().createFrom(invoice2)
+  );
+  invoice2.m_signature = result2.signature;
+  QVERIFY(invoice2.signature().length() > 0);
+  QVERIFY(result2.xml.length() > 0);
+  document.setActivityYear(2022);
+  document.appendInvoice(result.xml);
+  document.appendInvoice(result2.xml);
+
+  reply = lroe.sendDocument(document);
+  response = lroe.parseResponse(reply);
+  QCOMPARE(response.status, 200);
+  QCOMPARE(response.type, "Correcto");
+}
+
 void LROESubmitProcessTest::canQueryInvoices()
 {
   LROEClient lroe;

@@ -99,12 +99,14 @@ static QDomElement generateCorrectionInvoiceHeader(QDomDocument& document, const
   codeEl.appendChild(document.createTextNode(getCodeForInvoiceType(invoice.invoiceType())));
   typeEl.appendChild(document.createTextNode("S")); // S for Substitution, I for difference
   // Missing optional element(s): ImporteRectificacion and Sustitutiva, or ImporteRectificacionSustitutiva
+  root.appendChild(codeEl);
+  root.appendChild(typeEl);
   return root;
 }
 
 static QDomElement generateInvoiceSubstitutionId(QDomDocument& document, const TbaiInvoiceInterface& invoice)
 {
-  QDomElement root     = document.createElement("IDFacturaRectificatidaSustituida");
+  QDomElement root     = document.createElement("IDFacturaRectificadaSustituida");
   QDomElement seriesEl = document.createElement("SerieFactura");
   QDomElement numberEl = document.createElement("NumFactura");
   QDomElement dateEl   = document.createElement("FechaExpedicionFactura");
@@ -123,7 +125,7 @@ static QDomElement generateInvoiceSubstitutionId(QDomDocument& document, const T
 
 static QDomElement generateCorrectedInvoiceListHeader(QDomDocument& document, const TbaiInvoiceInterface& invoice)
 {
-  QDomElement root = document.createElement("FacturasRectificativasSustituidas");
+  QDomElement root = document.createElement("FacturasRectificadasSustituidas");
 
   for (const auto* correctedInvoice : invoice.correctedInvoices())
     root.appendChild(generateInvoiceSubstitutionId(document, *correctedInvoice));
@@ -149,6 +151,11 @@ static QDomElement generateInvoiceHeader(QDomDocument& document, const TbaiInvoi
   root.appendChild(hourEl);
   if (invoice.invoiceType() != TbaiInvoiceInterface::InvoiceType)
   {
+    if (invoice.series().isEmpty())
+    {
+      qDebug() << "Failed to generate TbaiDocument for invoice " << invoice.number() << ": series cannot be empty for rectificative invoices";
+      throw std::runtime_error("QTicketBai:TbaiDocument: invoice.series() cannot be empty for rectificative invoices.");
+    }
     root.appendChild(generateCorrectionInvoiceHeader(document, invoice));
     if (invoice.correctedInvoices().size() > 0)
       root.appendChild(generateCorrectedInvoiceListHeader(document, invoice));
