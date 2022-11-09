@@ -12,6 +12,7 @@ private slots:
   void canGenerateInvoices();
   void canChainInvoices();
   void canQueryInvoices();
+  void canCancelInvoices();
 };
 
 #endif

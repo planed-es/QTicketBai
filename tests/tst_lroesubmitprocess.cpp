@@ -33,10 +33,10 @@ QByteArray getRandomString()
 
 void LROESubmitProcessTest::canSubmitExampleDocument()
 {
-  CompanyData testEmitter{"5YD5J4IYKM7QJJNDKVAPTFTF6A6QLU", "", "", NifIvaId, "79732487C", "", "", "", ""};
-  LROESubmitProcess           lroe(testEmitter);
-  LROEDocument                document(LROEDocument::Model140, LROEDocument::AddOperation);
-  LROESubmitProcess::Response response;
+  CompanyData          testEmitter{"5YD5J4IYKM7QJJNDKVAPTFTF6A6QLU", "", "", NifIvaId, "79732487C", "", "", "", ""};
+  LROESubmitProcess    lroe(testEmitter);
+  LROEDocument         document(LROEDocument::Model140, LROEDocument::AddOperation);
+  LROEClient::Response response;
   QNetworkReply* reply;
 
   document.setDocumentType(1, 1);
@@ -50,10 +50,9 @@ void LROESubmitProcessTest::canSubmitExampleDocument()
 
 void LROESubmitProcessTest::canSubmitInvoice()
 {
-  LROESubmitProcess           lroe;
-  TbaiUploadDocument          document(LROEDocument::Model240, LROEDocument::AddOperation);
-  TbaiSignProcess             tbai_sign;
-  LROESubmitProcess::Response response;
+  LROESubmitProcess    lroe;
+  LROEUploadDocument   document(LROEDocument::Model240, LROEDocument::AddOperation);
+  LROEClient::Response response;
   QString invoiceXml;
   InvoiceTest invoice;
   QNetworkReply* reply;
@@ -69,9 +68,9 @@ void LROESubmitProcessTest::canSubmitInvoice()
 
 void LROESubmitProcessTest::canGenerateInvoices()
 {
-  LROESubmitProcess           lroe;
-  TbaiUploadDocument          document(LROEDocument::Model240);
-  LROESubmitProcess::Response response;
+  LROESubmitProcess    lroe;
+  LROEUploadDocument   document(LROEDocument::Model240);
+  LROEClient::Response response;
   QString invoiceXml;
   InvoiceTest invoice;
   QNetworkReply* reply;
@@ -96,9 +95,9 @@ void LROESubmitProcessTest::canGenerateInvoices()
 
 void LROESubmitProcessTest::canChainInvoices()
 {
-  LROESubmitProcess           lroe;
-  TbaiUploadDocument          document(LROEDocument::Model240);
-  LROESubmitProcess::Response response;
+  LROESubmitProcess    lroe;
+  LROEUploadDocument   document(LROEDocument::Model240);
+  LROEClient::Response response;
   QString invoiceXml;
   InvoiceTest invoice, invoice2;
   QNetworkReply* reply;
@@ -137,15 +136,54 @@ void LROESubmitProcessTest::canChainInvoices()
 
 void LROESubmitProcessTest::canQueryInvoices()
 {
-  LROESubmitProcess lroe;
+  LROEClient lroe;
   TbaiQueryDocument document(LROEDocument::Model240);
-  LROESubmitProcess::Response response;
+  LROEClient::Response response;
   QNetworkReply* reply;
 
   document.setActivityYear(2022);
+  document.setDocumentType(1, 1);
+  std::cout << "Query document:" << document.toString(2).toStdString() << std::endl;
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   qDebug() << response;
+  QCOMPARE(response.status, 200);
+  QCOMPARE(response.type, "Correcto");
+}
+
+void LROESubmitProcessTest::canCancelInvoices()
+{
+  LROESubmitProcess    lroe;
+  LROEUploadDocument   document(LROEDocument::Model240);
+  LROEClient::Response response;
+  InvoiceTest    invoice;
+  QNetworkReply* reply;
+
+  invoice.m_number = getRandomString();
+  invoice.m_name = "Parrot sale";
+  auto xml = TbaiSignProcess::sign(
+    TbaiDocument().createFrom(invoice)
+  ).xml;
+  QVERIFY(xml.length() > 0);
+  document.setActivityYear(2022);
+  document.appendInvoice(xml);
+  reply = lroe.sendDocument(document);
+  response = lroe.parseResponse(reply);
+  QCOMPARE(response.status, 200);
+  QCOMPARE(response.type, "Correcto");
+
+  LROECancelDocument cancelDocument(LROEDocument::Model240);
+  TbaiCancelDocument invoiceDocument;
+  invoice.m_number = getRandomString();
+  invoiceDocument.createFrom(invoice);
+  cancelDocument.appendInvoice(invoiceDocument.toString());
+  std::cout << "DEBUG0\n" << invoiceDocument.toString(2).toStdString() << '\n';
+  std::cout << "DEBUG1\n" << cancelDocument.toString(2).toStdString() << '\n';
+  std::cout << "DEBUG2\n";
+  reply = lroe.sendDocument(document);
+  response = lroe.parseResponse(reply);
+  qDebug() << response;
+  std::cout << response.document.toString().toStdString() << std::endl;
   QCOMPARE(response.status, 200);
   QCOMPARE(response.type, "Correcto");
 }

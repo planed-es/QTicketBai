@@ -16,14 +16,14 @@ static QString tbaiTagFor(LROEDocument::OperationType type)
   return type == LROEDocument::CancelOperation ? "AnulacionTicketBai" : "TicketBai";
 }
 
-TbaiUploadDocument::TbaiUploadDocument(LROEDocument::ModelType a, LROEDocument::OperationType operation) : LROEDocument(a, operation)
+LROEUploadDocument::LROEUploadDocument(LROEDocument::ModelType a, LROEDocument::OperationType operation) : LROEDocument(a, operation)
 {
   setDocumentType(1, 1);
   incomeListEl = createElement(listTagFor(model));
   root.appendChild(incomeListEl);
 }
 
-void TbaiUploadDocument::appendInvoiceFromFile(const QString& filepath)
+void LROEUploadDocument::appendInvoiceFromFile(const QString& filepath)
 {
   QFile file(filepath);
 
@@ -33,7 +33,7 @@ void TbaiUploadDocument::appendInvoiceFromFile(const QString& filepath)
     throw std::runtime_error("LROEDocument::appendInvoiceFromFile: cannot open " + filepath.toStdString());
 }
 
-void TbaiUploadDocument::appendInvoice(const QString& invoiceXml)
+void LROEUploadDocument::appendInvoice(const QString& invoiceXml)
 {
   QDomElement invoiceEl = createElement(itemTagFor(model));
   QDomElement tbaiEl    = createElement(tbaiTagFor(operation));
@@ -45,7 +45,7 @@ void TbaiUploadDocument::appendInvoice(const QString& invoiceXml)
     invoiceEl.appendChild(appendRevenue(invoiceXml));
 }
 
-QDomElement TbaiUploadDocument::appendRevenue(const QString& invoiceXml)
+QDomElement LROEUploadDocument::appendRevenue(const QString& invoiceXml)
 {
   QDomElement revenueEl  = createElement("Renta");
   QDomElement detailEl   = createElement("DetalleRenta");

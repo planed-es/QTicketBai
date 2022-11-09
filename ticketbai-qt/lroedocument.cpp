@@ -7,21 +7,28 @@
 static QByteArray xmlScope = "lrpjfecsgap";
 const QByteArray LROEDocument::apiVersion = "1.0";
 
-static QMap<LROEDocument::ModelType, QString> LROETagTypes = {
-  {LROEDocument::Model140, "LROEPF140IngresosConFacturaConSGAltaPeticion"},
-  {LROEDocument::Model240, "LROEPJ240FacturasEmitidasConSGAltaPeticion"}
+static QMap<
+  QPair<LROEDocument::ModelType, LROEDocument::OperationType>,
+  QString
+> LROETagTypes = {
+  { {LROEDocument::Model140, LROEDocument::AddOperation},    "LROEPF140IngresosConFacturaConSGAltaPeticion"},
+  { {LROEDocument::Model240, LROEDocument::AddOperation},    "LROEPJ240FacturasEmitidasConSGAltaPeticion"},
+  { {LROEDocument::Model140, LROEDocument::CancelOperation}, ""},
+  { {LROEDocument::Model240, LROEDocument::CancelOperation}, "LROEPJ240FacturasEmitidasConSGAnulacionPeticion"},
+  { {LROEDocument::Model140, LROEDocument::QueryOperation},  ""},
+  { {LROEDocument::Model240, LROEDocument::QueryOperation},  ""}
 };
 
 static QMap<
   QPair<LROEDocument::ModelType, LROEDocument::OperationType>,
   QString
 > LROEXmlns = {
-  { {LROEDocument::Model140, LROEDocument::AddOperation},      "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_AltaPeticion_V1_0_2.xsd"},
-  { {LROEDocument::Model240, LROEDocument::AddOperation},      "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AltaPeticion_V1_0_2.xsd"},
-  { {LROEDocument::Model140, LROEDocument::CancelOperation},   "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_AnulacionPeticion_V1_0_0.xsd"},
-  { {LROEDocument::Model240, LROEDocument::CancelOperation},   "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AnulacionPeticion_V1_0_0.xsd"},
-  { {LROEDocument::Model140, LROEDocument::QueryOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_ConsultaPeticion_V1_0_0.xsd"},
-  { {LROEDocument::Model240, LROEDocument::QueryOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_ConsultaPeticion_V1_0_0.xsd"}
+  { {LROEDocument::Model140, LROEDocument::AddOperation},    "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_AltaPeticion_V1_0_2.xsd"},
+  { {LROEDocument::Model240, LROEDocument::AddOperation},    "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AltaPeticion_V1_0_2.xsd"},
+  { {LROEDocument::Model140, LROEDocument::CancelOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_AnulacionPeticion_V1_0_0.xsd"},
+  { {LROEDocument::Model240, LROEDocument::CancelOperation}, "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_AnulacionPeticion_V1_0_0.xsd"},
+  { {LROEDocument::Model140, LROEDocument::QueryOperation},  "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PF_140_1_1_Ingresos_ConfacturaConSG_ConsultaPeticion_V1_0_0.xsd"},
+  { {LROEDocument::Model240, LROEDocument::QueryOperation},  "https://www.batuz.eus/fitxategiak/batuz/LROE/esquemas/LROE_PJ_240_1_1_FacturasEmitidas_ConSG_ConsultaPeticion_V1_0_0.xsd"}
 };
 
 static QMap<LROEDocument::OperationType, QString> LROEOperationTypes = {
@@ -53,14 +60,14 @@ LROEDocument::LROEDocument(ModelType modelType, OperationType operationType)
 
   model       = modelType;
   operation   = operationType;
-  root        = createElement(xmlScope + ':' + LROETagTypes[modelType]);
+  root        = createElement(xmlScope + ':' + LROETagTypes[{modelType, operationType}]);
   typeEl      = createElement("Capitulo");
   subtypeEl   = createElement("Subcapitulo");
   emitterEl   = createElement("ObligadoTributario");
   periodEl    = createElement("Ejercicio");
   operationEl = createElement("Operacion");
   if (xmlns != LROEXmlns.end())
-  root.setAttribute("xmlns:" + xmlScope, xmlns.value());
+    root.setAttribute("xmlns:" + xmlScope, xmlns.value());
   modelEl.appendChild(createTextNode(QString::number(static_cast<int>(modelType))));
   operationEl.appendChild(createTextNode(LROEOperationTypes[operationType]));
   versionEl.appendChild(createTextNode(apiVersion));

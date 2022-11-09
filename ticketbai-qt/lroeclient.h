@@ -28,7 +28,7 @@ public:
 
   void submit(const LROEDocument& document, std::function<void(const Response&)> callback);
 
-protected:
+//protected:
   QNetworkReply* sendDocument(const LROEDocument&);
   QJsonDocument  jsonHeaderFor(const LROEDocument&);
   Response       parseResponse(QNetworkReply*);
