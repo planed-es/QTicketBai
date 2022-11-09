@@ -7,6 +7,7 @@
 #include "ticketbai-qt/tbaisignprocess.h"
 #include "ticketbai-qt/uploaddocument.h"
 #include "ticketbai-qt/querydocument.h"
+#include "ticketbai-qt/canceldocument.h"
 #include "xmlsec-qt/xmlsign.h"
 #include "helper_invoice.h"
 #include <qcurl.h>

@@ -25,8 +25,10 @@ add_executable(lroesubmitprocess
   ../ticketbai-qt/lroeclient.cpp
   ../ticketbai-qt/lroedocument.cpp
   ../ticketbai-qt/tbaicertificate.cpp
+  ../ticketbai-qt/abstracttbaidocument.cpp
   ../ticketbai-qt/tbaidocument.cpp
   ../ticketbai-qt/uploaddocument.cpp
+  ../ticketbai-qt/canceldocument.cpp
   ../ticketbai-qt/tbaisignprocess.cpp
   ../ticketbai-qt/qcompressor.cpp
 )
@@ -54,6 +56,7 @@ add_executable(tbaisignprocess
   helper_xmlsec_test.cpp
   ../ticketbai-qt/qticketbai.cpp
   ../ticketbai-qt/tbaicertificate.cpp
+  ../ticketbai-qt/abstracttbaidocument.cpp
   ../ticketbai-qt/tbaidocument.cpp
   ../ticketbai-qt/tbaisignprocess.cpp)
 add_test(NAME tbaisignprocess COMMAND tbaisignprocess)

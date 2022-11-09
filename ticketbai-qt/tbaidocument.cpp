@@ -37,60 +37,12 @@ static const QMap<TbaiInvoiceInterface::VatExemption, QByteArray> vatExemptionCo
   {TbaiInvoiceInterface::VatExempted,                           "E6"}
 };
 
-static const QMap<TbaiIdentityType, QByteArray> identityTypeCodes = {
-  {NifIvaId,                                              "02"},
-  {PassportId,                                            "03"},
-  {OficialIdentificationDocumentFromCountryOfResidenceId, "04"},
-  {ResidenceCertificateId,                                "05"},
-  {OtherSupportingDocumentId,                             "06"}
-};
-
 TbaiDocument::TbaiDocument()
 {
 
 }
 
-static QDomElement generateEmitterXml(QDomDocument& document, const TbaiInvoiceInterface&)
-{
-  QDomElement root   = document.createElement("Emisor");
-  QDomElement cifEl  = document.createElement("NIF");
-  QDomElement nameEl = document.createElement("ApellidosNombreRazonSocial");
-
-  cifEl.appendChild(document.createTextNode(QTicketBai::user().id));
-  nameEl.appendChild(document.createTextNode(QTicketBai::user().name));
-  root.appendChild(cifEl);
-  root.appendChild(nameEl);
-  return root;
-}
-
-static QDomElement generateContactXml(QDomDocument& document, const CompanyData& contact)
-{
-  QDomElement idEl;
-
-  if (contact.idType == NifIvaId)
-  {
-    idEl = document.createElement("NIF");
-    idEl.appendChild(document.createTextNode(contact.id));
-  }
-  else
-  {
-    QDomElement idValueEl = document.createElement("ID");
-    QDomElement idTypeEl  = document.createElement("IDType");
-    QDomElement countryEl = document.createElement("CodigoPais");
-
-    idEl = document.createElement("IDOtro");
-    if (contact.countryCode.length() > 0)
-    {
-      countryEl.appendChild(document.createTextNode(contact.countryCode));
-      idEl.appendChild(countryEl);
-    }
-    idTypeEl.appendChild(document.createTextNode(identityTypeCodes[contact.idType]));
-    idValueEl.appendChild(document.createTextNode(contact.id));
-    idEl.appendChild(idTypeEl);
-    idEl.appendChild(idValueEl);
-  }
-  return idEl;
-}
+QDomElement generateContactXml(QDomDocument& document, const CompanyData& contact);
 
 static QDomElement generateRecipientXml(QDomDocument& document, const CompanyData& recipient)
 {
@@ -381,49 +333,6 @@ static QDomElement generateInvoiceBreakdown(QDomDocument& document, const TbaiIn
   return root;
 }
 
-static QDomElement generatePreviousInvoiceXml(QDomDocument& document, const TbaiInvoiceInterface& invoice)
-{
-  QDomElement root        = document.createElement("EncadenamientoFacturaAnterior");
-  QDomElement serieEl     = document.createElement("SerieFacturaAnterior");
-  QDomElement numberEl    = document.createElement("NumFacturaAnterior");
-  QDomElement dateEl      = document.createElement("FechaExpedicionFacturaAnterior");
-  QDomElement signatureEl = document.createElement("SignatureValueFirmaFacturaAnterior");
-
-  if (invoice.series().length() > 0)
-  {
-    serieEl.appendChild(document.createTextNode(invoice.series()));
-    root.appendChild(serieEl);
-  }
-  numberEl.appendChild(document.createTextNode(invoice.number()));
-  dateEl.appendChild(document.createTextNode(invoice.date().toString("dd-MM-yyyy")));
-  signatureEl.appendChild(document.createTextNode(invoice.signature().left(100)));
-  root.appendChild(numberEl);
-  root.appendChild(dateEl);
-  root.appendChild(signatureEl);
-  return root;
-}
-
-static QDomElement generateSoftwareXml(QDomDocument& document)
-{
-  QDomElement root        = document.createElement("Software");
-  QDomElement licenseEl   = document.createElement("LicenciaTBAI");
-  QDomElement developerEl = document.createElement("EntidadDesarrolladora");
-  QDomElement nameEl      = document.createElement("Nombre");
-  QDomElement versionEl   = document.createElement("Version");
-  QByteArray  license     = qgetenv("TBAI_LICENSE");
-
-  licenseEl.appendChild(document.createTextNode(license));
-  nameEl.appendChild(document.createTextNode(QTicketBai::developer().name));
-  versionEl.appendChild(document.createTextNode(TBAI_SOFTWARE_VERSION));
-
-  developerEl.appendChild(generateContactXml(document, QTicketBai::developer()));
-  root.appendChild(licenseEl);
-  root.appendChild(developerEl);
-  root.appendChild(nameEl);
-  root.appendChild(versionEl);
-  return root;
-}
-
 static QDomElement pluralSubjectHintXml(QDomDocument& document, const TbaiInvoiceInterface& invoice)
 {
   QDomElement element = document.createElement("VariosDestinatarios");
@@ -433,30 +342,14 @@ static QDomElement pluralSubjectHintXml(QDomDocument& document, const TbaiInvoic
   return element;
 }
 
-static QByteArray getDeviceUid()
-{
-  return "AAAAAAA";
-}
-
 TbaiDocument& TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
 {
-  clear();
-  root = createElement("T:TicketBai");
-  root.setAttribute("xmlns:T", "urn:ticketbai:emision");
-
-  QDomElement headerEl        = createElement("Cabecera");
   QDomElement subjectsEl      = createElement("Sujetos");
   QDomElement invoiceEl       = createElement("Factura");
   QDomElement footPrintEl     = createElement("HuellaTBAI");
-  QDomElement idVersionTbaiEl = createElement("IDVersionTBAI");
-  QDomElement deviceIdEl      = createElement("NumSerieDispositivo");
 
-  deviceIdEl.appendChild(createTextNode(getDeviceUid()));
-  idVersionTbaiEl.appendChild(createTextNode(TBAI_VERSION));
-  headerEl.appendChild(idVersionTbaiEl);
-  root.appendChild(headerEl);
-
-  subjectsEl.appendChild(generateEmitterXml(*this, invoice));
+  prepareDocument();
+  subjectsEl.appendChild(generateEmitter());
   if (invoice.recipients().size() > 0)
     subjectsEl.appendChild(generateRecipientXml(*this, invoice));
   if (invoice.recipients().size() > 1)
@@ -466,12 +359,7 @@ TbaiDocument& TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
   invoiceEl.appendChild(generateInvoiceData(*this, invoice));
   invoiceEl.appendChild(generateInvoiceBreakdown(*this, invoice));
   root.appendChild(invoiceEl);
-  if (invoice.previousInvoice())
-    footPrintEl.appendChild(generatePreviousInvoiceXml(*this, *invoice.previousInvoice()));
-  footPrintEl.appendChild(generateSoftwareXml(*this));
-  footPrintEl.appendChild(deviceIdEl);
-  root.appendChild(footPrintEl);
-  appendChild(root);
+  root.appendChild(generateFingerprint(invoice));
   return *this;
 }
 

@@ -1,16 +1,17 @@
 #ifndef  TBAIDOCUMENT_H
 # define TBAIDOCUMENT_H
 
-# include <QDomDocument>
-# include <QDomElement>
-# include "ticketbai-qt_global.h"
+# include "abstracttbaidocument.h"
 
 class TbaiInvoiceInterface;
 
-class TICKETBAIQT_EXPORT TbaiDocument : public QDomDocument
+class TICKETBAIQT_EXPORT TbaiDocument : public AbstractTbaiDocument
 {
 public:
   TbaiDocument();
+
+  QByteArray documentElementType() const override { return "TicketBai"; }
+  QByteArray documentXmlns()       const override { return "urn:ticketbai:emision"; }
 
   TbaiDocument&  createFrom(const TbaiInvoiceInterface&);
   bool           loadFromFile(const QString& path);
@@ -22,9 +23,6 @@ public:
 
   static QString getFileNameFor(const TbaiInvoiceInterface&);
   static QString signatureNamespace();
-
-private:
-  QDomElement root;
 };
 
 #endif // TBAIDOCUMENT_H
