@@ -81,7 +81,6 @@ void LROESubmitProcess::makeQueryFor(const QStringList &tbaiFiles)
   QNetworkReply* reply;
 
   document.setActivityYear(2022);
-  document.setOperationId("TEST01");
   for (const QString& path : tbaiFiles)
     document.appendInvoiceFromFile(dumpPath + '/' + path);
   backupDocumentForDebugPurposes(document);

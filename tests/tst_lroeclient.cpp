@@ -1,4 +1,4 @@
-#include "tst_lroesubmitprocess.h"
+#include "tst_lroeclient.h"
 #include "ticketbai-qt/tbaicertificate.h"
 #include "ticketbai-qt/lroesubmitprocess.h"
 #include "ticketbai-qt/companydata.h"
@@ -14,12 +14,12 @@
 #include <iostream>
 #include <random>
 
-QTEST_MAIN(LROESubmitProcessTest)
+QTEST_MAIN(LROEClientTest)
 
 QByteArray getRandomString()
 {
  const QByteArray possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
- const int randomStringLength = 12; // assuming you want random strings of 12 characters
+ const int randomStringLength = 12;
 
  QByteArray randomString;
  for(int i=0; i<randomStringLength; ++i)
@@ -31,42 +31,22 @@ QByteArray getRandomString()
  return randomString;
 }
 
-void LROESubmitProcessTest::canSubmitExampleDocument()
+static void storeGeneratedDocument(const QString test, const QString& name, const QDomDocument& document)
 {
-  CompanyData          testEmitter{"5YD5J4IYKM7QJJNDKVAPTFTF6A6QLU", "", "", NifIvaId, "79732487C", "", "", "", ""};
-  LROESubmitProcess    lroe(testEmitter);
-  LROEDocument         document(LROEDocument::Model140, LROEDocument::AddOperation);
-  LROEClient::Response response;
-  QNetworkReply* reply;
+  static QTemporaryDir directory;
+  QString rootDir = directory.path() + '/' + test;
+  QFile file(rootDir + '/' + name + ".xml");
 
-  document.setDocumentType(1, 1);
-  document.setActivityYear(2022);
-  QVERIFY(document.loadFromFile(qgetenv("TBAI_EXAMPLES_PATH") + "/Ejemplo_1_LROE_PF_140_IngresosConFacturaConSG_79732487C.xml"));
-  reply = lroe.sendDocument(document);
-  response = lroe.parseResponse(reply);
-  qDebug() << response;
-  QCOMPARE(response.status, 200);
+  directory.setAutoRemove(false);
+  QDir().mkpath(rootDir);
+  qDebug() << "Storing debug file" << rootDir << '/' << file.fileName();
+  if (file.open(QIODevice::WriteOnly))
+    file.write(document.toString(2).toUtf8());
+  else
+    qDebug() << "Cannot write into " << file.fileName();
 }
 
-void LROESubmitProcessTest::canSubmitInvoice()
-{
-  LROESubmitProcess    lroe;
-  LROEUploadDocument   document(LROEDocument::Model240, LROEDocument::AddOperation);
-  LROEClient::Response response;
-  QString invoiceXml;
-  InvoiceTest invoice;
-  QNetworkReply* reply;
-
-  document.setActivityYear(2022);
-  document.appendInvoiceFromFile(qgetenv("TBAI_EXAMPLES_PATH") + "/invoice-upload.xml");
-  reply = lroe.sendDocument(document);
-  response = lroe.parseResponse(reply);
-  qDebug() << response;
-  std::cout << response.document.toString(2).toStdString() << std::endl;
-  QCOMPARE(response.status, 200);
-}
-
-void LROESubmitProcessTest::canGenerateInvoices()
+void LROEClientTest::canGenerateInvoices()
 {
   LROESubmitProcess    lroe;
   LROEUploadDocument   document(LROEDocument::Model240);
@@ -74,26 +54,26 @@ void LROESubmitProcessTest::canGenerateInvoices()
   QString invoiceXml;
   InvoiceTest invoice;
   QNetworkReply* reply;
+  TbaiDocument tbaiDocument;
 
   invoice.m_number = getRandomString();
   invoice.m_name = "Parrot sale";
-  auto xml = TbaiSignProcess::sign(
-    TbaiDocument().createFrom(invoice)
-  ).xml;
+  tbaiDocument.createFrom(invoice);
+  auto xml = TbaiSignProcess::sign(tbaiDocument).xml;
   QVERIFY(xml.length() > 0);
   document.setActivityYear(2022);
   document.appendInvoice(xml);
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   qDebug() << response;
-  std::cout << "Response:\n";
-  std::cout << response.document.toString(2).toStdString() << std::endl;
-  std::cout << "Document:\n" << xml.toStdString() << std::endl;
+  storeGeneratedDocument("canGenerateInvoices", "LROEDocument", document);
+  storeGeneratedDocument("canGenerateInvoices", "TBAIDocument", tbaiDocument);
+  storeGeneratedDocument("canGenerateInvoices", "LROEResponse", response.document);
   QCOMPARE(response.status, 200);
   QCOMPARE(response.type, "Correcto");
 }
 
-void LROESubmitProcessTest::canChainInvoices()
+void LROEClientTest::canChainInvoices()
 {
   LROESubmitProcess    lroe;
   LROEUploadDocument   document(LROEDocument::Model240);
@@ -101,21 +81,20 @@ void LROESubmitProcessTest::canChainInvoices()
   QString invoiceXml;
   InvoiceTest invoice, invoice2;
   QNetworkReply* reply;
+  TbaiDocument tbaiDocumentA, tbaiDocumentB;
 
   invoice.m_number = getRandomString();
   invoice.m_name = "Parrot sale";
   invoice2.m_number = getRandomString();
   invoice2.m_name = "Bird sale";
   invoice2.m_previousInvoice = &invoice;
-  auto result = TbaiSignProcess::sign(
-    TbaiDocument().createFrom(invoice)
-  );
+  tbaiDocumentA.createFrom(invoice);
+  auto result = TbaiSignProcess::sign(tbaiDocumentA);
   invoice.m_signature = result.signature;
   QVERIFY(invoice.signature().length() > 0);
   QVERIFY(result.xml.length() > 0);
-  auto result2 = TbaiSignProcess::sign(
-    TbaiDocument().createFrom(invoice2)
-  );
+  tbaiDocumentB.createFrom(invoice2);
+  auto result2 = TbaiSignProcess::sign(tbaiDocumentB);
   invoice2.m_signature = result2.signature;
   QVERIFY(invoice2.signature().length() > 0);
   QVERIFY(result2.xml.length() > 0);
@@ -126,15 +105,15 @@ void LROESubmitProcessTest::canChainInvoices()
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   qDebug() << response;
-  std::cout << "Response:\n";
-  std::cout << response.document.toString(2).toStdString() << std::endl;
-  std::cout << "DocumentA:\n" << result.xml.toStdString() << std::endl;
-  std::cout << "DocumentB:\n" << result2.xml.toStdString() << std::endl;
+  storeGeneratedDocument("canChainInvoices", "LROEDocument",  document);
+  storeGeneratedDocument("canChainInvoices", "TBAIDocumentA", tbaiDocumentA);
+  storeGeneratedDocument("canChainInvoices", "TBAIDocumentB", tbaiDocumentB);
+  storeGeneratedDocument("canChainInvoices", "LROEResponse",  response.document);
   QCOMPARE(response.status, 200);
   QCOMPARE(response.type, "Correcto");
 }
 
-void LROESubmitProcessTest::canRectifyInvoices()
+void LROEClientTest::canRectifyInvoices()
 {
   LROESubmitProcess    lroe;
   LROEUploadDocument   document(LROEDocument::Model240);
@@ -143,6 +122,7 @@ void LROESubmitProcessTest::canRectifyInvoices()
   InvoiceTest invoice;
   InvoiceCorrectionTest invoice2;
   QNetworkReply* reply;
+  TbaiDocument tbaiDocumentA, tbaiDocumentB;
 
   invoice.m_number = getRandomString();
   invoice.m_name = "Parrot sale";
@@ -151,15 +131,13 @@ void LROESubmitProcessTest::canRectifyInvoices()
   invoice2.m_name = "Parrot sale correction";
   invoice2.m_previousInvoice = &invoice;
   invoice2.m_corrected << &invoice;
-  auto result = TbaiSignProcess::sign(
-    TbaiDocument().createFrom(invoice)
-  );
+  tbaiDocumentA.createFrom(invoice);
+  auto result = TbaiSignProcess::sign(tbaiDocumentA);
   invoice.m_signature = result.signature;
   QVERIFY(invoice.signature().length() > 0);
   QVERIFY(result.xml.length() > 0);
-  auto result2 = TbaiSignProcess::sign(
-    TbaiDocument().createFrom(invoice2)
-  );
+  tbaiDocumentB.createFrom(invoice2);
+  auto result2 = TbaiSignProcess::sign(tbaiDocumentB);
   invoice2.m_signature = result2.signature;
   QVERIFY(invoice2.signature().length() > 0);
   QVERIFY(result2.xml.length() > 0);
@@ -169,40 +147,47 @@ void LROESubmitProcessTest::canRectifyInvoices()
 
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
+  storeGeneratedDocument("canRectifyInvoices", "LROEDocument",  document);
+  storeGeneratedDocument("canRectifyInvoices", "TBAIDocumentA", tbaiDocumentA);
+  storeGeneratedDocument("canRectifyInvoices", "TBAIDocumentB", tbaiDocumentB);
+  storeGeneratedDocument("canRectifyInvoices", "LROEResponse",  response.document);
   QCOMPARE(response.status, 200);
   QCOMPARE(response.type, "Correcto");
 }
 
-void LROESubmitProcessTest::canQueryInvoices()
+void LROEClientTest::canQueryInvoices()
 {
   LROEClient lroe;
-  TbaiQueryDocument document(LROEDocument::Model240);
+  LROEQueryDocument document(LROEDocument::Model240);
   LROEClient::Response response;
   QNetworkReply* reply;
 
   document.setActivityYear(2022);
   document.setDocumentType(1, 1);
-  std::cout << "Query document:" << document.toString(2).toStdString() << std::endl;
+  document.setSeriesFilter("SERIE01");
+  document.setPage(1);
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   qDebug() << response;
+  storeGeneratedDocument("canQueryInvoices", "LROEDocument", document);
+  storeGeneratedDocument("canQueryInvoices", "LROEResponse", response.document);
   QCOMPARE(response.status, 200);
   QCOMPARE(response.type, "Correcto");
 }
 
-void LROESubmitProcessTest::canCancelInvoices()
+void LROEClientTest::canCancelInvoices()
 {
   LROESubmitProcess    lroe;
   LROEUploadDocument   document(LROEDocument::Model240);
   LROEClient::Response response;
   InvoiceTest    invoice;
   QNetworkReply* reply;
+  TbaiDocument tbaiDocument;
 
   invoice.m_number = getRandomString();
   invoice.m_name = "Parrot sale";
-  auto xml = TbaiSignProcess::sign(
-    TbaiDocument().createFrom(invoice)
-  ).xml;
+  tbaiDocument.createFrom(invoice);
+  auto xml = TbaiSignProcess::sign(tbaiDocument).xml;
   QVERIFY(xml.length() > 0);
   document.setActivityYear(2022);
   document.appendInvoice(xml);
@@ -216,13 +201,14 @@ void LROESubmitProcessTest::canCancelInvoices()
   invoice.m_number = getRandomString();
   invoiceDocument.createFrom(invoice);
   cancelDocument.appendInvoice(invoiceDocument.toString());
-  std::cout << "DEBUG0\n" << invoiceDocument.toString(2).toStdString() << '\n';
-  std::cout << "DEBUG1\n" << cancelDocument.toString(2).toStdString() << '\n';
-  std::cout << "DEBUG2\n";
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
   qDebug() << response;
   std::cout << response.document.toString().toStdString() << std::endl;
+  storeGeneratedDocument("canCancelInvoices", "LROEDocument",  document);
+  storeGeneratedDocument("canCancelInvoices", "TBAIDocument", tbaiDocument);
+  storeGeneratedDocument("canCancelInvoices", "TBAICancelDocument", invoiceDocument);
+  storeGeneratedDocument("canCancelInvoices", "LROEResponse",  response.document);
   QCOMPARE(response.status, 200);
   QCOMPARE(response.type, "Correcto");
 }

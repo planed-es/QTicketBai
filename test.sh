@@ -5,7 +5,8 @@ CERTIFICATE_ARCHIVE_VERSION="1_0_2"
 CERTIFICATE_ARCHIVE="batuz_lroe_ziurtagiriak_kit_certificados_v$CERTIFICATE_ARCHIVE_VERSION"
 CERTIFICATE_FOLDER="Batuz_LROE_Ziurtagiriak_KIT_Certificados_V$CERTIFICATE_ARCHIVE_VERSION"
 EXAMPLE_ARCHIVE="Ejemplos"
-TESTDIR="$PWD/ticketbai-test-env"
+TESTDIR="$PWD/.ticketbai-test-env"
+export LD_LIBRARY_PATH=/usr/local/lib
 
 ##
 ## Download testing resources
@@ -23,17 +24,7 @@ else
   echo "- certificates are already present. skipping download."
 fi
 
-if ! [ -f "Ejemplo_TicketBAI_B00000034_B2022_0101.xml" ] ; then
-  curl -sSO "https://www.batuz.eus/fitxategiak/Batuz/LROE/ejemplos/$EXAMPLE_ARCHIVE.7z"
-  7z x $EXAMPLE_ARCHIVE.7z
-  rm   $EXAMPLE_ARCHIVE.7z
-else
-  echo "- examples are already present. skipping download."
-fi
-
 cd -
-
-cp ./examples/invoice-upload.xml "$TESTDIR/invoice-upload.xml"
 
 ##
 ## Prepare environment variables

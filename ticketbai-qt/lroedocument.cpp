@@ -13,10 +13,10 @@ static QMap<
 > LROETagTypes = {
   { {LROEDocument::Model140, LROEDocument::AddOperation},    "LROEPF140IngresosConFacturaConSGAltaPeticion"},
   { {LROEDocument::Model240, LROEDocument::AddOperation},    "LROEPJ240FacturasEmitidasConSGAltaPeticion"},
-  { {LROEDocument::Model140, LROEDocument::CancelOperation}, ""},
+  { {LROEDocument::Model140, LROEDocument::CancelOperation}, "LROEPF140IngresosConFacturaConSGAnulacionPeticion"},
   { {LROEDocument::Model240, LROEDocument::CancelOperation}, "LROEPJ240FacturasEmitidasConSGAnulacionPeticion"},
-  { {LROEDocument::Model140, LROEDocument::QueryOperation},  ""},
-  { {LROEDocument::Model240, LROEDocument::QueryOperation},  ""}
+  { {LROEDocument::Model140, LROEDocument::QueryOperation},  "LROEPF140IngresosConFacturaConSGConsultaPeticion"},
+  { {LROEDocument::Model240, LROEDocument::QueryOperation},  "LROEPJ240FacturasEmitidasConSGConsultaPeticion"}
 };
 
 static QMap<

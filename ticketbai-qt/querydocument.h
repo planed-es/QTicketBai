@@ -6,10 +6,10 @@
 
 void resetElement(QDomElement& el);
 
-class TICKETBAIQT_EXPORT TbaiQueryDocument : public LROEDocument
+class TICKETBAIQT_EXPORT LROEQueryDocument : public LROEDocument
 {
 public:
-  TbaiQueryDocument(ModelType model) : LROEDocument(model, LROEDocument::QueryOperation)
+  LROEQueryDocument(ModelType model) : LROEDocument(model, LROEDocument::QueryOperation)
   {
     filter          = createElement("FiltroConsultaFacturasEmitidasConSG");
     invoiceHeaderEl = createElement("CabeceraFactura");
@@ -18,6 +18,7 @@ public:
     pageEl          = createElement("NumPaginaConsulta");
     recipientEl     = createElement("Destinatario");
     filter.appendChild(invoiceHeaderEl);
+    initializeFilters();
   }
 
   void setSeriesFilter(const QString& series)
