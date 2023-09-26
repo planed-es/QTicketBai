@@ -1,0 +1,3 @@
+[submodule "Qt-QrCodeGenerator"]
+	path = Qt-QrCodeGenerator
+	url = https://github.com/alex-spataru/Qt-QrCodeGenerator

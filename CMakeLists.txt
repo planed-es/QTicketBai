@@ -14,7 +14,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(PkgConfig)
 find_package(ZLIB REQUIRED)
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Network Xml)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network Xml)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED
+  COMPONENTS Core Network Xml
+  OPTIONAL_COMPONENTS Gui)
 pkg_check_modules(XMLSECQT REQUIRED xmlsec-qt>=1.0.0)
 pkg_check_modules(QTCURL REQUIRED QtCurl>=1.0.0)
 
@@ -25,9 +27,13 @@ include_directories(${QTCURL_INCLUDE_DIRS})
 file(GLOB headers ticketbai-qt/*.h)
 file(GLOB sources ticketbai-qt/*.cpp)
 
+if (${Qt6Gui_FOUND})
+  file(GLOB qrcode_sources Qt-QrCodeGenerator/*.cpp)
+endif()
+
 add_library(ticketbai-qt SHARED
   ${headers}
-  ${sources}
+  ${sources} ${qrcode_sources}
 )
 
 target_compile_definitions(ticketbai-qt PRIVATE TICKETBAIQT_LIBRARY)

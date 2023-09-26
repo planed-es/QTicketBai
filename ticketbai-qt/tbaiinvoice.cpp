@@ -5,6 +5,9 @@
 #include <QTemporaryFile>
 #include <QProcess>
 #include <QDebug>
+#ifdef QT_GUI_LIB
+# include <QrCodeGenerator>
+#endif
 
 QByteArray TbaiInvoice::getId() const
 {
@@ -78,3 +81,12 @@ QByteArray TbaiInvoice::generateCRC(const QByteArray &input) const
     result = '0' + result;
   return result;
 }
+
+#ifdef QT_GUI_LIB
+QImage TbaiInvoice::getQRCode()
+{
+  QrCodeGenerator generator;
+
+  return generator.generateQr(getUrl());
+}
+#endif
