@@ -11,7 +11,7 @@ public:
   QByteArray m_signature, m_series, m_number;
   QString m_name;
   Recipients m_recipients = Recipients{
-    CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", NifIvaId, "U39072079", "0505050505", "0606060606", "12345", "e@ma.il"}
+    CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", "12345", NifIvaId, "U39072079", "0505050505", "0606060606", "e@ma.il"}
   };
   QList<VatBreakdown> m_breakdowns = QList<VatBreakdown>{
     VatBreakdown{
@@ -50,7 +50,7 @@ public:
   QByteArray m_signature, m_series, m_number;
   QString m_name;
   Recipients m_recipients = Recipients{
-    CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", NifIvaId, "U39072079", "0505050505", "0606060606", "12345", "e@ma.il"}
+    CompanyData{"Francis Huster", "1 Rue de la paix", "Imagination Land", "12345", NifIvaId, "U39072079", "0505050505", "0606060606", "e@ma.il"}
   };
   QList<VatBreakdown> m_breakdowns = QList<VatBreakdown>{
     VatBreakdown{

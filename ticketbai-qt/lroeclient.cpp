@@ -24,11 +24,11 @@ static void onFinished(QNetworkReply* reply, std::function<void()> callback)
     QObject::connect(reply, &QNetworkReply::finished, callback);
 }
 
-LROEClient::LROEClient(const CompanyData& emitter, QObject* parent) : QObject(parent), emitter(emitter)
+LROEClient::LROEClient(const TbaiContext& context, QObject* parent) : QObject(parent), context(context)
 {
 }
 
-LROEClient::LROEClient(QObject* parent) : QObject(parent), emitter(QTicketBai::user())
+LROEClient::LROEClient(QObject* parent) : QObject(parent), context(QTicketBai::context())
 {
 }
 
@@ -65,8 +65,8 @@ QNetworkReply* LROEClient::sendDocument(const LROEDocument& document)
   request.setRawHeader(customHeaderPrefix + "version",      LROEDocument::apiVersion);
   request.setRawHeader(customHeaderPrefix + "content-type", "application/xml");
   request.setRawHeader(customHeaderPrefix + "data",         jsonHeader.toJson(QJsonDocument::Compact));
-  curl.setCertificate(TbaiCertificate::pemCertificatePath(), QSsl::Pem);
-  curl.setSslKey(TbaiCertificate::pemKeyPath(), QSsl::Rsa);
+  curl.setCertificate(context.constCertificate().pemCertificatePath(), QSsl::Pem);
+  curl.setSslKey(context.constCertificate().pemKeyPath(), QSsl::Rsa);
   curl.setVerbosityLevel(7);
   return curl.send(request, compressedData);
 }
@@ -74,8 +74,8 @@ QNetworkReply* LROEClient::sendDocument(const LROEDocument& document)
 QJsonDocument LROEClient::jsonHeaderFor(const LROEDocument& document)
 {
   QJsonObject jsonHeader, jsonEmitter, jsonDrs;
-  QByteArray  cif       = emitter.id.toUtf8();
-  QByteArray  name      = emitter.name.toUtf8();
+  QByteArray  cif       = context.constEmitter().id().toUtf8();
+  QByteArray  name      = context.constEmitter().name().toUtf8();
   QByteArray  firstname = qgetenv("EUS_BIZKAIA_FIRSTNAME");
   QByteArray  lastname  = qgetenv("EUS_BIZKAIA_LASTNAME");
 

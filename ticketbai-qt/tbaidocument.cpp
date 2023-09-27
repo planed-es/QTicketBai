@@ -1,5 +1,5 @@
 #include "tbaidocument.h"
-#include "invoiceinterface.h"
+#include "tbaiinvoiceinterface.h"
 #include "qticketbai.h"
 #include <QUrl>
 #include <QFile>

@@ -1,5 +1,5 @@
 #include "canceldocument.h"
-#include "invoiceinterface.h"
+#include "tbaiinvoiceinterface.h"
 
 LROECancelDocument::LROECancelDocument(LROEDocument::ModelType model) : LROEUploadDocument(model, CancelOperation)
 {

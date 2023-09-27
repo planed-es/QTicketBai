@@ -6,7 +6,7 @@
 # include <QDomDocument>
 # include <functional>
 # include "lroedocument.h"
-# include "companydata.h"
+# include "context.h"
 
 class QNetworkReply;
 
@@ -22,7 +22,7 @@ public:
     QDomDocument document;
   };
 
-  explicit LROEClient(const CompanyData& emitter, QObject* parent = nullptr);
+  explicit LROEClient(const TbaiContext&, QObject* parent = nullptr);
   explicit LROEClient(QObject* parent = nullptr);
   virtual ~LROEClient() {}
 
@@ -34,7 +34,7 @@ public:
   Response       parseResponse(QNetworkReply*);
   void           onResponseReceived(const Response&);
 
-  CompanyData emitter;
+  const TbaiContext& context;
 };
 
 QDebug operator<<(QDebug d, const LROEClient::Response&);

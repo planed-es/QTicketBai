@@ -25,9 +25,9 @@ void TbaiSignProcessTest::generatesValidDocuments()
   TbaiSignProcess tbaiSign;
   TbaiDocument document;
   InvoiceTest  invoice;
-  QXmlVerify   verifier(TbaiCertificate::sslKey);
+  QXmlVerify   verifier(ticketbai.context().certificate().sslKey());
 
-  verifier.usePassphrase(TbaiCertificate::password().toUtf8());
+  verifier.usePassphrase(ticketbai.context().certificate().password().toUtf8());
   invoice.m_number = "FAC02";
   invoice.m_name   = "Parrot sale";
   document.createFrom(invoice);

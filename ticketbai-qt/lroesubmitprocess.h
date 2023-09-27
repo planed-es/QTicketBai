@@ -13,13 +13,11 @@ class TICKETBAIQT_EXPORT LROESubmitProcess : public LROEClient
   Q_OBJECT
   friend class LROESubmitProcessTest;
 public:
-  static const QString dumpPath;
+  explicit LROESubmitProcess(const TbaiContext&, QObject* parent = nullptr);
+  explicit LROESubmitProcess(QObject* parent = nullptr);
 
-  explicit LROESubmitProcess(const CompanyData& emitter, QObject* parent = nullptr);
-  explicit LROESubmitProcess(QObject *parent = nullptr);
-
-  static QString getDumpPath();
-  static QStringList pendingFiles();
+  QString dumpPathOrFallback() const;
+  QStringList pendingFiles() const;
 
   void submitAll();
   void submitIf(std::function<bool (const QString&)> condition);

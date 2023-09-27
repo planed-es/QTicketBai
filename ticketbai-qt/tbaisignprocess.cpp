@@ -1,6 +1,7 @@
 #include <QProcess>
 #include <QTemporaryFile>
 #include <QStandardPaths>
+#include "qticketbai.h"
 #include "tbaisignprocess.h"
 #include "tbaidocument.h"
 #include "tbaicertificate.h"
@@ -10,9 +11,10 @@
 #include <iostream>
 #include <QDebug>
 
-bool TbaiSignProcess::checkSettings()
+bool TbaiSignProcess::checkSettings(const TbaiContext& context)
 {
-  QByteArray certificate = qgetenv("TBAI_CERTIFICATE_PATH");
+  const auto& certificate = context.constCertificate();
+  const auto& software = context.constSoftware();
 
 #define TBAI_FILE_CHECKER(path) \
   if (!path.isEmpty() && QFile::exists(path)) \
@@ -24,30 +26,36 @@ bool TbaiSignProcess::checkSettings()
   }
 
   std::cerr << "Checking configuration for QTicketBAI:" << std::endl;
-  std::cerr << "- Looking for certificate:\t";
-  TBAI_FILE_CHECKER(TbaiCertificate::path())
-  std::cerr << "- Certificate password ?\t" << (TbaiCertificate::password().isEmpty() ? "No" : "Yes") << std::endl;
-  std::cerr << "- Using TicketBAI software CIF:\t" << qgetenv("TBAI_SOFTWARE_CIF").toStdString() << std::endl;
-  std::cerr << "- Using TicketBAI software:\t" << qgetenv("TBAI_SOFTWARE_NAME").toStdString() << std::endl;
-  std::cerr << "- Using TicketBAI Tax Authority:\t" << qgetenv("TBAI_TAX_AUTHORITY_URL").toStdString() << std::endl;
-  return true;
+  std::cerr << "- Using TicketBAI software CIF:\t\t" <<  software.cif().toStdString() << std::endl;
+  std::cerr << "- Using TicketBAI software:\t\t" << software.name().toStdString() << std::endl;
+  std::cerr << "- Using TicketBAI Tax Authority:\t" << context.taxAuthorityUrl().toString().toStdString() << std::endl;
+  std::cerr << "- Looking for certificate:\t\t";
+  TBAI_FILE_CHECKER(certificate.path())
+  std::cerr << "- Certificate password ?\t\t" << (certificate.password().isEmpty() ? "No" : "Yes") << std::endl;
+  std::cerr << "- Certificate import:\t\t\t" << (certificate.isReady() ? "Success" : "Failure") << std::endl;
+  return certificate.isReady();
 }
 
 TbaiSignProcess::ReturnValue TbaiSignProcess::sign(TbaiDocument& document)
+{
+  return sign(QTicketBai::context().constCertificate(), document);
+}
+
+TbaiSignProcess::ReturnValue TbaiSignProcess::sign(const TbaiCertificate& tbaiCertificate, TbaiDocument& document)
 {
   ReturnValue retval;
   QXmlSign signer;
   QXmlSecCertificate certificate;
 
   certificate.setFormat(QXmlSecCertificate::Pkcs12);
-  certificate.setFilepath(TbaiCertificate::path());
-  certificate.setPassword(TbaiCertificate::password());
+  certificate.setFilepath(tbaiCertificate.path());
+  certificate.setPassword(tbaiCertificate.password());
   certificate.setName("QTicketBai/pkcs12");
 
   signer.withSignatureId("Signature")
         .useNamespace(TbaiDocument::signatureNamespace())
         .useDocument(document)
-        .useSslKey(TbaiCertificate::sslKey, TbaiCertificate::password().toUtf8())
+        .useSslKey(tbaiCertificate.sslKey(), tbaiCertificate.password().toUtf8())
         .useCertificate(certificate);
 
   QString keyInfoId              = signer.signatureContext().tagId("KeyInfo");
@@ -65,7 +73,7 @@ TbaiSignProcess::ReturnValue TbaiSignProcess::sign(TbaiDocument& document)
     .signingCertificate()
       .useV2()
       .useDigestAlgorithm(QCryptographicHash::Sha256)
-      .useCertificate(TbaiCertificate::certificate);
+      .useCertificate(tbaiCertificate.certificate());
 
   xadesObject.signedProperties().signatureProperties()
     .signaturePolicyIdentifier()

@@ -9,6 +9,7 @@
 # define TBAI_SOFTWARE_VERSION "1.0"
 
 class TbaiInvoiceInterface;
+class TbaiContext;
 
 class TICKETBAIQT_EXPORT AbstractTbaiDocument : public QDomDocument
 {
@@ -16,12 +17,16 @@ public:
   virtual QByteArray documentElementType() const = 0;
   virtual QByteArray documentXmlns() const = 0;
 
+  void useContext(const TbaiContext& value) { _context = &value; }
+
 protected:
+  const TbaiContext& context() const;
   void prepareDocument();
   QDomElement generateFingerprint(const TbaiInvoiceInterface&);
   QDomElement generateEmitter();
 
   QDomElement root, headerEl;
+  const TbaiContext* _context = nullptr;
 };
 
 #endif

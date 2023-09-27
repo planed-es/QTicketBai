@@ -5,12 +5,15 @@ QTEST_MAIN(TbaiCertificateTest)
 
 void TbaiCertificateTest::generatesPemKeyAndCertificateFromPkcs12()
 {
-  QCOMPARE(TbaiCertificate::pemCertificatePath(), QString());
-  QCOMPARE(TbaiCertificate::pemKeyPath(), QString());
-  TbaiCertificate::prepare();
+  TbaiCertificate tbaiCertificate;
+
+  QCOMPARE(tbaiCertificate.pemCertificatePath(), QString());
+  QCOMPARE(tbaiCertificate.pemKeyPath(), QString());
+  tbaiCertificate.setPassword(qgetenv("TBAI_CERTIFICATE_PASSWORD"));
+  tbaiCertificate.setPath(qgetenv("TBAI_CERTIFICATE_PATH"));
   {
-    QFileInfo pemInfo(TbaiCertificate::pemCertificatePath());
-    QFileInfo keyInfo(TbaiCertificate::pemKeyPath());
+    QFileInfo pemInfo(tbaiCertificate.pemCertificatePath());
+    QFileInfo keyInfo(tbaiCertificate.pemKeyPath());
 
     QVERIFY(pemInfo.exists());
     QVERIFY(keyInfo.exists());
@@ -35,7 +38,4 @@ void TbaiCertificateTest::generatesPemKeyAndCertificateFromPkcs12()
     QCOMPARE(keyInfo.permission(QFileDevice::ReadOther), false);
     QCOMPARE(keyInfo.permission(QFileDevice::ExeOther), false);
   }
-  TbaiCertificate::cleanup();
-  QCOMPARE(TbaiCertificate::pemCertificatePath(), QString());
-  QCOMPARE(TbaiCertificate::pemKeyPath(), QString());
 }

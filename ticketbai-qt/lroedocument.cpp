@@ -38,20 +38,30 @@ static QMap<LROEDocument::OperationType, QString> LROEOperationTypes = {
   {LROEDocument::QueryOperation,  "C00"}
 };
 
-static QDomElement generateEmitterXml(QDomDocument& document)
+static QDomElement generateEmitterXml(QDomDocument& document, const TbaiContext& context)
 {
   QDomElement root   = document.createElement("ObligadoTributario");
   QDomElement cifEl  = document.createElement("NIF");
   QDomElement nameEl = document.createElement("ApellidosNombreRazonSocial");
 
-  cifEl.appendChild(document.createTextNode(QTicketBai::user().id));
-  nameEl.appendChild(document.createTextNode(QTicketBai::user().name));
+  cifEl.appendChild(document.createTextNode(context.constEmitter().id()));
+  nameEl.appendChild(document.createTextNode(context.constEmitter().name()));
   root.appendChild(cifEl);
   root.appendChild(nameEl);
   return root;
 }
 
+LROEDocument::LROEDocument(const TbaiContext& context, ModelType modelType, OperationType operationType)
+{
+  initialize(context, modelType, operationType);
+}
+
 LROEDocument::LROEDocument(ModelType modelType, OperationType operationType)
+{
+  initialize(QTicketBai::context(), modelType, operationType);
+}
+
+void LROEDocument::initialize(const TbaiContext& context, ModelType modelType, OperationType operationType)
 {
   QDomElement header    = createElement("Cabecera");
   QDomElement modelEl   = createElement("Modelo");
@@ -77,7 +87,7 @@ LROEDocument::LROEDocument(ModelType modelType, OperationType operationType)
   header.appendChild(operationEl);
   header.appendChild(versionEl);
   header.appendChild(periodEl);
-  header.appendChild(generateEmitterXml(*this));
+  header.appendChild(generateEmitterXml(*this, context));
   root.appendChild(header);
   appendChild(root);
 }

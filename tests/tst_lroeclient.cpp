@@ -61,7 +61,7 @@ void LROEClientTest::canGenerateInvoices()
   tbaiDocument.createFrom(invoice);
   auto xml = TbaiSignProcess::sign(tbaiDocument).xml;
   QVERIFY(xml.length() > 0);
-  document.setActivityYear(2022);
+  document.setActivityYear(invoice.date().date().year());
   document.appendInvoice(xml);
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
@@ -98,7 +98,7 @@ void LROEClientTest::canChainInvoices()
   invoice2.m_signature = result2.signature;
   QVERIFY(invoice2.signature().length() > 0);
   QVERIFY(result2.xml.length() > 0);
-  document.setActivityYear(2022);
+  document.setActivityYear(invoice.date().date().year());
   document.appendInvoice(result.xml);
   document.appendInvoice(result2.xml);
 
@@ -141,7 +141,7 @@ void LROEClientTest::canRectifyInvoices()
   invoice2.m_signature = result2.signature;
   QVERIFY(invoice2.signature().length() > 0);
   QVERIFY(result2.xml.length() > 0);
-  document.setActivityYear(2022);
+  document.setActivityYear(invoice.date().date().year());
   document.appendInvoice(result.xml);
   document.appendInvoice(result2.xml);
 
@@ -162,7 +162,7 @@ void LROEClientTest::canQueryInvoices()
   LROEClient::Response response;
   QNetworkReply* reply;
 
-  document.setActivityYear(2022);
+  document.setActivityYear(2023);
   document.setDocumentType(1, 1);
   document.setSeriesFilter("SERIE01");
   document.setPage(1);
@@ -189,7 +189,7 @@ void LROEClientTest::canCancelInvoices()
   tbaiDocument.createFrom(invoice);
   auto xml = TbaiSignProcess::sign(tbaiDocument).xml;
   QVERIFY(xml.length() > 0);
-  document.setActivityYear(2022);
+  document.setActivityYear(invoice.date().date().year());
   document.appendInvoice(xml);
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);

@@ -4,67 +4,80 @@
 #include <QProcess>
 #include <QSslCertificate>
 #include <QSslKey>
-#include <QTemporaryFile>
 #include <QDebug>
 
-QSslCertificate TbaiCertificate::certificate;
-QSslKey         TbaiCertificate::sslKey;
-static QTemporaryFile pemCertificateFile;
-static QTemporaryFile pemKeyFile;
-
-QString TbaiCertificate::alias()
+TbaiCertificate::TbaiCertificate(QObject* parent) : QObject(parent)
 {
-  QString alias = qgetenv("TBAI_CERTIFICATE_ALIAS");
-
-  return alias.isEmpty() ? QString("1") : alias;
+  connect(this, &TbaiCertificate::pathChanged,     this, &TbaiCertificate::refresh);
+  connect(this, &TbaiCertificate::passwordChanged, this, &TbaiCertificate::refresh);
 }
 
-QString TbaiCertificate::pemCertificatePath()
+TbaiCertificate::~TbaiCertificate()
 {
-  return pemCertificateFile.fileName();
+  _pemCertificateFile.remove();
+  _pemKeyFile.remove();
 }
 
-QString TbaiCertificate::pemKeyPath()
+void TbaiCertificate::refresh()
 {
-  return pemKeyFile.fileName();
+  if (!_path.isEmpty())
+  {
+    _prepared = false;
+    emit readyChanged();
+    prepare();
+  }
 }
 
-static QStringList certificate_prepare_params()
+QString TbaiCertificate::pemCertificatePath() const
+{
+  return _pemCertificateFile.fileName();
+}
+
+QString TbaiCertificate::pemKeyPath() const
+{
+  return _pemKeyFile.fileName();
+}
+
+static QStringList certificatePrepareParams(TbaiCertificate& certificate)
 {
   return QStringList()
     << "pkcs12"
-    << "-in" << TbaiCertificate::path()
-    << "-passin" << ("pass:" + TbaiCertificate::password());
+    << "-in" << certificate.path()
+    << "-passin" << ("pass:" + certificate.password());
 }
 
 bool TbaiCertificate::prepare()
 {
-  QFile pfxFile(TbaiCertificate::path());
-
-  // Prepare pem temporary files
-  pemCertificateFile.open(); pemCertificateFile.close();
-  pemKeyFile.open(); pemKeyFile.close();
-  // Load PKCS12 certificate
-  if (pfxFile.open(QIODevice::ReadOnly))
+  if (!_prepared)
   {
-    bool a = preparePemCertificates();
-    bool b = QSslCertificate::importPkcs12(&pfxFile, &sslKey, &certificate, nullptr, TbaiCertificate::password().toUtf8());
+    QFile pfxFile(path());
 
-    if (!a)
-      qDebug() << "TbaiCertificate: failed to generate certificate and key in PEM format from" << TbaiCertificate::path();
-    if (!b)
-      qDebug() << "TbaiCertificate: QSslCertificate failed to import pkcs12 certificate" << TbaiCertificate::path();
-    return a && b;
+    // Prepare pem temporary files
+    _pemCertificateFile.open(); _pemCertificateFile.close();
+    _pemKeyFile.open(); _pemKeyFile.close();
+    // Load PKCS12 certificate
+    if (pfxFile.open(QIODevice::ReadOnly))
+    {
+      bool a = preparePemCertificates();
+      bool b = QSslCertificate::importPkcs12(&pfxFile, &_sslKey, &_certificate, nullptr, password().toUtf8());
+
+      if (!a)
+        qDebug() << "TbaiCertificate: failed to generate certificate and key in PEM format from" << TbaiCertificate::path();
+      if (!b)
+        qDebug() << "TbaiCertificate: QSslCertificate failed to import pkcs12 certificate" << TbaiCertificate::path();
+      _prepared = a && b;
+      emit readyChanged();
+    }
+    else
+      qDebug() << "TbaiCertificate: cannot open file" << path();
   }
-  else
-    qDebug() << "TbaiCertificate: cannot open file" << TbaiCertificate::path();
-  return false;
+  return _prepared;
 }
 
 bool TbaiCertificate::preparePemCertificates()
 {
   QProcess pem_process, key_process;
-  QStringList pem_params = certificate_prepare_params();
+  QStringList pem_params = certificatePrepareParams(*this);
   QStringList key_params = pem_params;
   QString openssl_bin("openssl");
 
@@ -83,13 +96,7 @@ bool TbaiCertificate::preparePemCertificates()
   return (pem_process.exitCode() + key_process.exitCode()) == 0;
 }
 
-void TbaiCertificate::cleanup()
-{
-  pemCertificateFile.remove();
-  pemKeyFile.remove();
-}
-
 QByteArray TbaiCertificate::digest(QCryptographicHash::Algorithm algorithm)
 {
-  return certificate.digest(algorithm);
+  return _certificate.digest(algorithm);
 }

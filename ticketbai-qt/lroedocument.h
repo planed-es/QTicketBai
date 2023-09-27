@@ -4,6 +4,8 @@
 # include <QDomDocument>
 # include "ticketbai-qt_global.h"
 
+class TbaiContext;
+
 class TICKETBAIQT_EXPORT LROEDocument : public QDomDocument
 {
 public:
@@ -24,6 +26,7 @@ public:
   };
 
   LROEDocument(ModelType, OperationType);
+  LROEDocument(const TbaiContext&, ModelType, OperationType);
 
   void setOperationId(const QByteArray&);
   void setActivityYear(int year);
@@ -35,6 +38,8 @@ public:
   int activityYear() const { return year; }
 
 protected:
+  void initialize(const TbaiContext&, ModelType, OperationType);
+
   ModelType     model;
   OperationType operation;
   QDomElement   root;

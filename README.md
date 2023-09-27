@@ -11,6 +11,7 @@ The library depends on the following libraries:
 * QtCore
 * QtNetwork
 * QtXml
+* QtGui (optional, needed for QR code generation)
 * zlib
 
 Make sure these are all installed on your system. Afterwards, run the following commands
@@ -23,18 +24,50 @@ cmake ..
 make
 ```
 
+If you're planning on using QTicketBai from a server, then you might not want to bring
+QtGui into the equation. You can disable the dependency to QtGui by replacing `cmake ..`
+with `cmake .. -DWITH_GUI=OFF`. Note that this will disable the feature providing QRCode
+generation for the TicketBAI invoices.
+
 ## Configuration
 
-You can configure QTicketBai before runtime, by using environment variables:
+You can configure QTicketBai by creating a QTicketBai object:
 
 ```
-LROE_ENVIRONMENT          # set to "production" when you want to stop using LROE's test environment
-TBAI_OUTPUT_PATH          # directory in which your TicketBai invoices will be stored
-TBAI_CERTIFICATE_PATH     # path to your pkcs12 certificate file
-TBAI_CERTIFICATE_PASSWORD # password to yuor pkcs12 certificate
-TBAI_LICENSE              # TODO
-TBAI_TAX_AUTHORITY_URL    # Tax authority (ex: https://batuz.eus/QRTBAI)
+QTicketBai ticketBai;
+
+ticketBai.certificate()
+  .withPath("/path/to/your/p12/certificate")
+  .withPassword("Your certificate's password");
+  .prepare();
+ticketBai.software()
+  .withLicense("LICENSENUMBER")
+  .withCif("Software Developer CIF number")
+  .withName("Software Developer name");
+ticketBai
+  .withTaxAuthorityUrl(QUrl("https://batuz.eus/QRTBAI/"))
+  .withDumpPath("/path/to/storage/folder/for/signed/documents")
+  .withEmitter(CompanyData{
+    "My company name",            // name
+    "15 camino del caminante",    // address
+    "Bilbao",                     // city
+    "12345",                      // postal code
+    TbaiContactDefines::NifIvaId, // id type
+    "A99805061"                   // id number
+  })
+  .withDeveloper(CompanyData{
+    "QTicketBai Developers",
+    "16 camino del caminante",
+    "Northrend",
+    "54321",
+    TbaiContactDefines::NifIvaId,
+    "Software Developer CIF number",
+  });
 ```
+
+The QTicketBai object works as a singleton: there can only be one instance of QTicketBai at any given time
+in your application. By default, all the features of the ticketbai-qt library will use these settings
+when signin documents or interacting with the TicketBAI service.
 
 ## Usage
 ### Initializing
@@ -50,11 +83,11 @@ const CompanyData user = {
   "PlanED S.L.",
   "1 Camino del Caminante",
   "City",
-  NifIvaId, // ID type, as defined in ticketbai-qt/companydata.h in the TbaiIdentityType enum
+  "Postal code",
+  TbaiContactDefines::NifIvaId, // ID type, as defined in ticketbai-qt/tbaicontactdefines.h
   "ID", // Cif, nif, depending on the ID type
   "Phone number",
   "Fax number",
-  "Postal code",
   "Email"
 };
 
@@ -84,6 +117,10 @@ int main()
 
   ticketbai.withUser(user)
   ticketbai.withDeveloper(user);
+  ticketBai.certificate()
+    .withPath("/path/to/your/p12/certificate")
+    .withPassword("Your certificate's password");
+    .prepare(); // Do not forget to call `prepare` on your TbaiCertificate once you've set its settings
   if (TbaiSignProcess::checkSettings())
   {
     return 0; // QTicketBai is ready to sign and submit invoices
@@ -123,42 +160,13 @@ int main()
 }
 ```
 
-#### Initializing QTicketBai
-In the case of QTicketBai, some initialization is required before you make
-any requests to the relevant LROE service. Namely, you need to pre-load your
-certificate, which is to be done using the `TbaiCertificate` class:
-
-```
-#include <ticketbai-qt/qticketbai.h>
-#include <ticketbai-qt/tbaisignprocess.h>
-#include <ticketbai-qt/tbaicertificate.h>
-#include <xmlsec-qt/xmlsec.h>
-
-const CompanyData user = ...
-
-int main()
-{
-  QXmlSec xmlsec;
-  QTicketBai ticketbai;
-
-  ticketbai.withUser(user)
-  ticketbai.withDeveloper(user);
-  if (TbaiSignProcess::checkSettings())
-  {
-    TbaiCertificate::prepare(); // loads your PKCS12 certificate
-    return 0;
-  }
-  return -1;
-}
-```
-
 ### Submitting invoices
 #### Implementing the invoice interface
-The next step is to create your own invoices object, implementing the `TbaiInvoiceInterface`
-defined in `ticketbai-qt/invoiceinterface.h`:
+The next step is to create your own invoices objects, implementing the `TbaiInvoiceInterface`
+defined in `ticketbai-qt/tbaiinvoiceinterface.h`:
 
 ```
-#include <ticketbai-qt/invoiceinterface.h>
+#include <ticketbai-qt/tbaiinvoiceinterface.h>
 class MyInvoice : public TbaiInvoiceInterface
 {
 public:

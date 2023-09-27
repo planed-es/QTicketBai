@@ -2,17 +2,21 @@
 # define TBAIINVOICE_H
 
 # include "ticketbai-qt_global.h"
-# include "invoiceinterface.h"
+# include "tbaiinvoiceinterface.h"
 # include <QtXml>
 # ifdef QT_GUI_LIB
 #  include <QImage>
 # endif
 
+class TbaiContext;
+
 class TICKETBAIQT_EXPORT TbaiInvoice
 {
 public:
-  TbaiInvoice(const TbaiInvoiceInterface* ptr) : invoice(*ptr) {}
-  TbaiInvoice(const TbaiInvoiceInterface& ref) : invoice(ref) {}
+  TbaiInvoice(const TbaiContext& context, const TbaiInvoiceInterface* ptr);
+  TbaiInvoice(const TbaiContext& context, const TbaiInvoiceInterface& ptr);
+  TbaiInvoice(const TbaiInvoiceInterface* ptr);
+  TbaiInvoice(const TbaiInvoiceInterface& ref);
 
   QByteArray getId() const;
   QByteArray getIdWithCRC() const;
@@ -24,6 +28,7 @@ public:
 private:
   QByteArray   generateCRC(const QByteArray& input) const;
 
+  const TbaiContext&          context;
   const TbaiInvoiceInterface& invoice;
 };
 

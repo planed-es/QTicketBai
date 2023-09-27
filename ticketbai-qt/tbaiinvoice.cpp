@@ -6,15 +6,27 @@
 #include <QProcess>
 #include <QDebug>
 #ifdef QT_GUI_LIB
-# include <QrCodeGenerator>
+# include <QrCodeGenerator.h>
 #endif
+
+TbaiInvoice::TbaiInvoice(const TbaiContext& context, const TbaiInvoiceInterface* ptr) : context(context), invoice(*ptr)
+{}
+
+TbaiInvoice::TbaiInvoice(const TbaiContext& context, const TbaiInvoiceInterface& ref) : context(context), invoice(ref)
+{}
+
+TbaiInvoice::TbaiInvoice(const TbaiInvoiceInterface* ptr) : context(QTicketBai::context()), invoice(*ptr)
+{}
+
+TbaiInvoice::TbaiInvoice(const TbaiInvoiceInterface& ref) : context(QTicketBai::context()), invoice(ref)
+{}
 
 QByteArray TbaiInvoice::getId() const
 {
   QChar   separator('-');
   QString out("TBAI");
   const auto&      signature = invoice.signature();
-  const QByteArray cifNumber = QTicketBai::user().id.toUtf8();
+  const QByteArray cifNumber = context.constEmitter().id().toUtf8();
 
   out += separator;
   for (int i = 0 ; i < 9 && i < cifNumber.length() ; ++i)
@@ -37,7 +49,7 @@ QByteArray TbaiInvoice::getIdWithCRC() const
 
 QUrl TbaiInvoice::getUrl() const
 {
-  QByteArray url = qgetenv("TBAI_TAX_AUTHORITY_URL");
+  QByteArray url = context.taxAuthorityUrl().toString().toUtf8();
 
   url += "?id=" + QUrl::toPercentEncoding(getIdWithCRC());
   url += "&s="  + QUrl::toPercentEncoding(invoice.series());
@@ -83,10 +95,10 @@ QByteArray TbaiInvoice::generateCRC(const QByteArray &input) const
 }
 
 #ifdef QT_GUI_LIB
-QImage TbaiInvoice::getQRCode()
+QImage TbaiInvoice::getQRCode() const
 {
   QrCodeGenerator generator;
 
-  return generator.generateQr(getUrl());
+  return generator.generateQr(getUrl().toString());
 }
 #endif

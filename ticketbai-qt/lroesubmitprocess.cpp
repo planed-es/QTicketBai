@@ -6,15 +6,10 @@
 #include <QJsonDocument>
 #include <QNetworkReply>
 #include <qcurl.h>
-#include "qcompressor.h"
 #include "companydata.h"
 #define MAX_INVOICES_PER_LROE 1000
 
-const QString    LROESubmitProcess::dumpPath = LROESubmitProcess::getDumpPath();
-
-static bool productionEnv() { return qgetenv("LROE_ENVIRONMENT") == "production"; }
-
-LROESubmitProcess::LROESubmitProcess(const CompanyData& emitter, QObject *parent) : LROEClient(emitter, parent)
+LROESubmitProcess::LROESubmitProcess(const TbaiContext& context, QObject *parent) : LROEClient(context, parent)
 {
 }
 
@@ -22,16 +17,16 @@ LROESubmitProcess::LROESubmitProcess(QObject *parent) : LROEClient(parent)
 {
 }
 
-QString LROESubmitProcess::getDumpPath()
+QString LROESubmitProcess::dumpPathOrFallback() const
 {
-  QString path = qgetenv("TBAI_OUTPUT_PATH");
+  QString path = context.dumpPath();
 
   return path.isEmpty() ? "lroe-pending" : path;
 }
 
-QStringList LROESubmitProcess::pendingFiles()
+QStringList LROESubmitProcess::pendingFiles() const
 {
-  return QDir(dumpPath).entryList(QStringList() << "*.xml");
+  return QDir(dumpPathOrFallback()).entryList(QStringList() << "*.xml");
 }
 
 void LROESubmitProcess::submitAll()
@@ -80,9 +75,9 @@ void LROESubmitProcess::makeQueryFor(const QStringList &tbaiFiles)
   LROEUploadDocument document(LROEDocument::Model240, LROEDocument::AddOperation);
   QNetworkReply* reply;
 
-  document.setActivityYear(2022);
+  document.setActivityYear(2023);
   for (const QString& path : tbaiFiles)
-    document.appendInvoiceFromFile(dumpPath + '/' + path);
+    document.appendInvoiceFromFile(dumpPathOrFallback() + '/' + path);
   backupDocumentForDebugPurposes(document);
   submit(document, std::bind(&LROESubmitProcess::onResponseReceived, this, std::placeholders::_1));
 }

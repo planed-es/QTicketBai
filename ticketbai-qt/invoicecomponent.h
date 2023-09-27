@@ -3,13 +3,11 @@
 
 # include <QObject>
 # include "ticketbai-qt_global.h"
-# include "invoiceinterface.h"
+# include "tbaiinvoiceinterface.h"
 
 class TICKETBAIQT_EXPORT TbaiInvoiceComponent : public QObject, public TbaiInvoiceInterface
 {
   Q_OBJECT
-  Q_ENUM(VatExemption)
-  Q_ENUM(Type)
 
   Q_PROPERTY(Type         invoiceType READ invoiceType WRITE setInvoiceType NOTIFY invoiceTypeChanged)
   Q_PROPERTY(QByteArray   signature READ signature NOTIFY signatureChanged)

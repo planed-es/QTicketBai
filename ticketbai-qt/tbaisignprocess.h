@@ -5,6 +5,7 @@
 # include <QProcess>
 # include <QTemporaryFile>
 # include "tbaidocument.h"
+# include "context.h"
 
 class QProcess;
 class QDomDocument;
@@ -13,7 +14,7 @@ class TbaiInvoiceInterface;
 class TICKETBAIQT_EXPORT TbaiSignProcess
 {
 public:
-  static bool checkSettings();
+  static bool checkSettings(const TbaiContext&);
 
   struct ReturnValue
   {
@@ -24,6 +25,7 @@ public:
   };
 
   static ReturnValue sign(TbaiDocument&);
+  static ReturnValue sign(const TbaiCertificate&, TbaiDocument&);
 };
 
 #endif // TBAISIGNPROCESS_H

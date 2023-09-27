@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 project(ticketbai-qt LANGUAGES CXX)
 
 option(BUILD_TESTS "builds tests" ON)
+option(WITH_GUI    "adds QRCode generation" ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOUIC ON)
@@ -11,12 +12,15 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(QT_COMPONENTS Core Network Xml)
+if (${WITH_GUI})
+  set(QT_COMPONENTS ${QT_COMPONENTS} Gui Svg)
+endif()
+
 find_package(PkgConfig)
 find_package(ZLIB REQUIRED)
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Network Xml)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED
-  COMPONENTS Core Network Xml
-  OPTIONAL_COMPONENTS Gui)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${QT_COMPONENTS})
 pkg_check_modules(XMLSECQT REQUIRED xmlsec-qt>=1.0.0)
 pkg_check_modules(QTCURL REQUIRED QtCurl>=1.0.0)
 
@@ -28,7 +32,8 @@ file(GLOB headers ticketbai-qt/*.h)
 file(GLOB sources ticketbai-qt/*.cpp)
 
 if (${Qt6Gui_FOUND})
-  file(GLOB qrcode_sources Qt-QrCodeGenerator/*.cpp)
+  include_directories(Qt-QrCodeGenerator/src)
+  file(GLOB_RECURSE qrcode_sources Qt-QrCodeGenerator/src/*.cpp)
 endif()
 
 add_library(ticketbai-qt SHARED
@@ -38,10 +43,20 @@ add_library(ticketbai-qt SHARED
 
 target_compile_definitions(ticketbai-qt PRIVATE TICKETBAIQT_LIBRARY)
 
-target_link_libraries(ticketbai-qt PRIVATE
+set(QT_COMPONENTS_LINK
   Qt${QT_VERSION_MAJOR}::Core
   Qt${QT_VERSION_MAJOR}::Network
-  Qt${QT_VERSION_MAJOR}::Xml
+  Qt${QT_VERSION_MAJOR}::Xml)
+
+if (${WITH_GUI})
+  set(QT_COMPONENTS_LINK ${QT_COMPONENTS_LINK}
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Svg)
+
+endif()
+
+target_link_libraries(ticketbai-qt PRIVATE
+  ${QT_COMPONENTS_LINK}
   QtCurl
   z
   ${XMLSECQT_LIBRARIES}
