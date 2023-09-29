@@ -1,0 +1,14 @@
+<RCC>
+  <qresource prefix="/">
+    <file>main.qml</file>
+    <file>ui/TicketBai.qml</file>
+    <file>ui/ModelIndex.qml</file>
+    <file>ui/ContactIndex.qml</file>
+    <file>ui/Contact.qml</file>
+    <file>ui/ProductIndex.qml</file>
+    <file>ui/Product.qml</file>
+    <file>ui/InvoiceIndex.qml</file>
+    <file>ui/Invoice.qml</file>
+    <file>ui/InvoiceLine.qml</file>
+  </qresource>
+</RCC>
