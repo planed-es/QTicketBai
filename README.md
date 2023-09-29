@@ -33,7 +33,7 @@ generation for the TicketBAI invoices.
 
 You can configure QTicketBai by creating a QTicketBai object:
 
-```
+```c++
 QTicketBai ticketBai;
 
 ticketBai.certificate()
@@ -76,7 +76,7 @@ The first thing you want to do is to setup the user information for the entity
 that will use your program to manage their invoices, as well as your own
 information as a TicketBAI developer entity:
 
-```
+```c++
 #include <ticketbai-qt/qticketbai.h>
 
 const CompanyData user = {
@@ -105,7 +105,7 @@ int main()
 The second thing you want to do is to check that your settings are correct. You can use
 the `TbaiSignProcess::checkSettings` function to check the validity of your settings:
 
-```
+```c++
 #include <ticketbai-qt/qticketbai.h>
 #include <ticketbai-qt/tbaisignprocess.h>
 
@@ -138,7 +138,7 @@ QXmlSec is a dependency of QTicketBai, and it needs to be initialized before any
 document signing is performed. Just make sure you maintain an instance of the
 `QXmlSec` object while such operations are running:
 
-```
+```c++
 #include <ticketbai-qt/qticketbai.h>
 #include <ticketbai-qt/tbaisignprocess.h>
 #include <xmlsec-qt/xmlsec.h> // QXmlSec header
@@ -165,7 +165,7 @@ int main()
 The next step is to create your own invoices objects, implementing the `TbaiInvoiceInterface`
 defined in `ticketbai-qt/tbaiinvoiceinterface.h`:
 
-```
+```c++
 #include <ticketbai-qt/tbaiinvoiceinterface.h>
 class MyInvoice : public TbaiInvoiceInterface
 {
@@ -217,7 +217,7 @@ The `TbaiInvoiceInterface::VatBreakdown` type allows you to define invoice amoun
 policy. Any couple VAT policy and VAT/Recargo rate can only be expressed up to one time in the resulting list.
 Let's see a simple example:
 
-```
+```c++
 TbaiInvoiceInterface::VatBreakdown vatBreakdown;
 
 vatBreakdown.base = 42.42; // tax base
@@ -227,7 +227,7 @@ vatBreakdown.recargoRate = 0.014; // Recargo rate at 1.4%
 
 For VAT exempted subjets, we would change that code as following:
 
-```
+```c++
 TbaiInvoiceInterface::VatBreakdown vatBreakdown;
 
 vatBreakdown.base = 42.42; // tax base
@@ -236,7 +236,7 @@ vatBreakdown.exemptionType = TbaiInvoiceInterface::VatExemptedByNormaForalArticl
 
 And for subjects that are not subjects to VAT:
 
-```
+```c++
 TbaiInvoiceInterface::VatBreakdown vatBreakdown;
 
 vatBreakdown.base = 42.42;
@@ -247,7 +247,7 @@ vatBreakdown.vatState = TbaiInvoiceInterface::NotSubjectToVat;
 Now that we can expose our custom invoices types to QTicketBai, the next thing we'll
 want to do is to generate TicketBAI documents:
 
-```
+```c++
 #include <ticketbai-qt/tbaisignprocess.h>
 #include <iostream>
 
@@ -274,7 +274,7 @@ the current value of `document.signature()`.
 Errors might happen during the signing process. The `TbaiSignProcess::sign` function
 return value can be used to get details about failures:
 
-```
+```c++
 void sign_invoice(const TbaiInvoiceInterface& invoice)
 {
   TbaiDocument document = TbaiDocument().createFrom(invoice);
@@ -295,7 +295,7 @@ void sign_invoice(const TbaiInvoiceInterface& invoice)
 
 At anytime, you can load a TicketBAI document from a file:
 
-```
+```c++
 #include <ticketbai-qt/tbaidocument.h>
 #include <iostream>
 
@@ -322,7 +322,7 @@ int main(int argc, char** argv)
 In case you intend to store your TicketBAI invoices another way, you
 may also initialize a `TbaiDocument` directly from the XML source:
 
-```
+```c++
 TbaiDocument document;
 QFile file("/var/lib/ticketbai/invoice.xml");
 
@@ -337,7 +337,7 @@ if (file.open(QIODevice::ReadOnly))
 
 TODO: the LROESubmitProcess isn't completely implemented yet
 
-```
+```c++
 #include <ticketbai-qt/lroesubmitprocess.h>
 
 static void invoice_upload()
