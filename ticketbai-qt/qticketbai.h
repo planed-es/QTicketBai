@@ -8,7 +8,7 @@
 class TICKETBAIQT_EXPORT QTicketBai : public TbaiContext
 {
 public:
-  explicit QTicketBai();
+  explicit QTicketBai(QObject* parent = nullptr);
   ~QTicketBai();
 
   static TbaiContext& context();

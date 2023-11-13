@@ -11,7 +11,7 @@ static const char* noInstanceError =
   "you must have a QTicketBai instance living somewhere in your application to define the"
   "default settings.";
 
-QTicketBai::QTicketBai()
+QTicketBai::QTicketBai(QObject* parent) : TbaiContext(parent)
 {
   if (_instance)
     throw std::logic_error(multipleInstanceError);
