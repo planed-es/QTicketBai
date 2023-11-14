@@ -67,5 +67,7 @@ if (BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
+configure_file(ticketbai-qt.pc.in ticketbai-qt.pc @ONLY)
+
 install(FILES ${headers} DESTINATION include/ticketbai-qt)
 install(TARGETS ticketbai-qt LIBRARY DESTINATION lib)
