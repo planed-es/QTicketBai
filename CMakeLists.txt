@@ -57,7 +57,6 @@ endif()
 
 target_link_libraries(ticketbai-qt PRIVATE
   ${QT_COMPONENTS_LINK}
-  QtCurl
   z
   ${XMLSECQT_LIBRARIES}
   ${QTCURL_LIBRARIES}
