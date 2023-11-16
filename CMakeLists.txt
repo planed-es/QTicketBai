@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(ticketbai-qt LANGUAGES CXX)
+project(ticketbai-qt
+  LANGUAGES CXX
+  VERSION 1.0.0
+  DESCRIPTION "TicketBai and LROE protocols implementation using Qt")
 
 option(BUILD_TESTS "builds tests" ON)
 option(WITH_GUI    "adds QRCode generation" ON)
@@ -72,3 +75,4 @@ configure_file(ticketbai-qt.pc.in ticketbai-qt.pc @ONLY)
 
 install(FILES ${headers} DESTINATION include/ticketbai-qt)
 install(TARGETS ticketbai-qt LIBRARY DESTINATION lib)
+install(FILES ${CMAKE_BINARY_DIR}/ticketbai-qt.pc DESTINATION lib/pkgconfig)
