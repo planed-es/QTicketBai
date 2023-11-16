@@ -1,4 +1,5 @@
-find_package(Qt6 REQUIRED COMPONENTS Test Core Network Xml)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS ${QT_COMPONENTS})
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test Core Network Xml)
 find_package(ZLIB REQUIRED)
 
 enable_testing(true)

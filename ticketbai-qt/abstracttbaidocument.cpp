@@ -8,7 +8,7 @@ void AbstractTbaiDocument::prepareDocument()
 
   headerEl = createElement("Cabecera");
   root = createElement("T:" + documentElementType());
-  root.setAttribute("xmlns:T", documentXmlns());
+  root.setAttribute("xmlns:T", QString(documentXmlns()));
   idVersionTbaiEl.appendChild(createTextNode(TBAI_VERSION));
   headerEl.appendChild(idVersionTbaiEl);
   root.appendChild(headerEl);
