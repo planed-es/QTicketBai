@@ -24,10 +24,11 @@ find_package(PkgConfig)
 find_package(ZLIB REQUIRED)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS ${QT_COMPONENTS})
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${QT_COMPONENTS})
-pkg_check_modules(XMLSECQT REQUIRED xmlsec-qt>=1.0.0)
-pkg_check_modules(QTCURL REQUIRED QtCurl>=1.0.0)
+pkg_check_modules(XMLSECQT REQUIRED xmlsec-qt${QT_VERSION_MAJOR}>=1.0.0)
+pkg_check_modules(QTCURL REQUIRED Qt${QT_VERSION_MAJOR}Curl>=1.0.0)
 
-message("Using Qt${QT_VERSION_MAJOR}")
+message("Building ${PROJECT_NAME} using Qt${QT_VERSION_MAJOR}")
+set(TARGET_NAME ticketbai-qt${QT_VERSION_MAJOR})
 
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${XMLSECQT_INCLUDE_DIRS})
@@ -41,12 +42,12 @@ if ("${Qt6Gui_FOUND}" OR "${Qt5Gui_FOUND}")
   file(GLOB_RECURSE qrcode_sources Qt-QrCodeGenerator/src/*.cpp)
 endif()
 
-add_library(ticketbai-qt SHARED
+add_library(${TARGET_NAME} SHARED
   ${headers}
   ${sources} ${qrcode_sources}
 )
 
-target_compile_definitions(ticketbai-qt PRIVATE TICKETBAIQT_LIBRARY)
+target_compile_definitions(${TARGET_NAME} PRIVATE TICKETBAIQT_LIBRARY)
 
 set(QT_COMPONENTS_LINK
   Qt${QT_VERSION_MAJOR}::Core
@@ -57,10 +58,9 @@ if (${WITH_GUI})
   set(QT_COMPONENTS_LINK ${QT_COMPONENTS_LINK}
     Qt${QT_VERSION_MAJOR}::Gui
     Qt${QT_VERSION_MAJOR}::Svg)
-
 endif()
 
-target_link_libraries(ticketbai-qt PRIVATE
+target_link_libraries(${TARGET_NAME} PRIVATE
   ${QT_COMPONENTS_LINK}
   z
   ${XMLSECQT_LIBRARIES}
@@ -71,8 +71,8 @@ if (BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-configure_file(ticketbai-qt.pc.in ticketbai-qt.pc @ONLY)
+configure_file(ticketbai-qt.pc.in ${TARGET_NAME}.pc @ONLY)
 
 install(FILES ${headers} DESTINATION include/ticketbai-qt)
-install(TARGETS ticketbai-qt LIBRARY DESTINATION lib)
-install(FILES ${CMAKE_BINARY_DIR}/ticketbai-qt.pc DESTINATION lib/pkgconfig)
+install(TARGETS ${TARGET_NAME} LIBRARY DESTINATION lib)
+install(FILES ${CMAKE_BINARY_DIR}/${TARGET_NAME}.pc DESTINATION lib/pkgconfig)

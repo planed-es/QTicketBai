@@ -6,14 +6,13 @@ enable_testing(true)
 include_directories(..)
 
 set(test_libraries 
-  ticketbai-qt
+  ${TARGET_NAME}
   Qt${QT_VERSION_MAJOR}::Test
   Qt${QT_VERSION_MAJOR}::Core
   Qt${QT_VERSION_MAJOR}::Network
   Qt${QT_VERSION_MAJOR}::Xml
-  QtCurl
+  ${QTCURL_LIBRARIES}
   z
-  curl
   ${XMLSECQT_LIBRARIES}
   ${CRAILS_ENCRYPT_LIBRARIES}
 )
