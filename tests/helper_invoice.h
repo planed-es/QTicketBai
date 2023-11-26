@@ -1,7 +1,7 @@
 #ifndef  HELPER_INVOICEH_H
 # define HELPER_INVOICE_H
 
-# include "ticketbai-qt/invoiceinterface.h"
+# include "ticketbai-qt/tbaiinvoiceinterface.h"
 
 class InvoiceTest : public TbaiInvoiceInterface
 {

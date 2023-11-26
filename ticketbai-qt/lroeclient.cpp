@@ -7,7 +7,9 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QSsl>
+#ifdef TICKETBAIQT_WITH_LROE_SENDING
 #include <qcurl.h>
+#endif
 
 static const QByteArray customHeaderPrefix  = "eus-bizkaia-n3-";
 static const QByteArray xmlPrefix           = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>";
@@ -49,6 +51,7 @@ void LROEClient::submit(const LROEDocument& document, std::function<void(const R
 
 QNetworkReply* LROEClient::sendDocument(const LROEDocument& document)
 {
+#ifdef TICKETBAIQT_WITH_LROE_SENDING
   QNetworkRequest   request;
   QUrl              endpoint(lroeHostname() + "/N3B4000M/aurkezpena");
   QJsonDocument     jsonHeader = jsonHeaderFor(document);
@@ -69,6 +72,9 @@ QNetworkReply* LROEClient::sendDocument(const LROEDocument& document)
   curl.setSslKey(context.constCertificate().pemKeyPath(), QSsl::Rsa);
   curl.setVerbosityLevel(7);
   return curl.send(request, compressedData);
+#else
+  return nullptr;
+#endif
 }
 
 QJsonDocument LROEClient::jsonHeaderFor(const LROEDocument& document)

@@ -1,4 +1,20 @@
 #include "qcompressor.h"
+#include <zlib.h>
+
+#define GZIP_WINDOWS_BIT 15 + 16
+#define GZIP_CHUNK_SIZE 32 * 1024
+
+#ifndef TICKETBAIQT_WITH_SIGNING
+bool QCompressor::gzipCompress(QByteArray input, QByteArray &output, int level)
+{
+  return false;
+}
+
+bool QCompressor::gzipDecompress(QByteArray input, QByteArray &output)
+{
+  return false;
+}
+#else
 
 /**
  * @brief Compresses the given buffer using the standard GZIP algorithm
@@ -193,3 +209,5 @@ bool QCompressor::gzipDecompress(QByteArray input, QByteArray &output)
     }
     return(true);
 }
+
+#endif

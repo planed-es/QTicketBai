@@ -5,9 +5,11 @@
 #include "tbaisignprocess.h"
 #include "tbaidocument.h"
 #include "tbaicertificate.h"
-#include "xmlsec-qt/xmlverify.h"
-#include "xmlsec-qt/xmlsign.h"
-#include "xmlsec-qt/xades/object.h"
+#ifdef TICKETBAIQT_WITH_SIGNING
+# include "xmlsec-qt/xmlverify.h"
+# include "xmlsec-qt/xmlsign.h"
+# include "xmlsec-qt/xades/object.h"
+#endif
 #include <iostream>
 #include <QDebug>
 
@@ -43,6 +45,7 @@ TbaiSignProcess::ReturnValue TbaiSignProcess::sign(TbaiDocument& document)
 
 TbaiSignProcess::ReturnValue TbaiSignProcess::sign(const TbaiCertificate& tbaiCertificate, TbaiDocument& document)
 {
+#ifdef TICKETBAIQT_WITH_SIGNING
   ReturnValue retval;
   QXmlSign signer;
   QXmlSecCertificate certificate;
@@ -138,4 +141,7 @@ TbaiSignProcess::ReturnValue TbaiSignProcess::sign(const TbaiCertificate& tbaiCe
   else
     retval.error = "QXmlSign failed to sign the document";
   return retval;
+#else
+  return ReturnValue("QTicketBAI was built without document signing support");
+#endif
 }

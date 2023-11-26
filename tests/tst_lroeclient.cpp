@@ -2,7 +2,7 @@
 #include "ticketbai-qt/tbaicertificate.h"
 #include "ticketbai-qt/lroesubmitprocess.h"
 #include "ticketbai-qt/companydata.h"
-#include "ticketbai-qt/invoiceinterface.h"
+#include "ticketbai-qt/tbaiinvoiceinterface.h"
 #include "ticketbai-qt/tbaidocument.h"
 #include "ticketbai-qt/tbaisignprocess.h"
 #include "ticketbai-qt/uploaddocument.h"

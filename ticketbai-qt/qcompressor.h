@@ -1,12 +1,8 @@
 #ifndef QCOMPRESSOR_H
 #define QCOMPRESSOR_H
 
-#include <zlib.h>
 #include <QByteArray>
 #include "ticketbai-qt_global.h"
-
-#define GZIP_WINDOWS_BIT 15 + 16
-#define GZIP_CHUNK_SIZE 32 * 1024
 
 class TICKETBAIQT_EXPORT QCompressor
 {

@@ -3,7 +3,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test Core Network Xml)
 find_package(ZLIB REQUIRED)
 
 enable_testing(true)
-include_directories(..)
+include_directories(../)
 
 set(test_libraries 
   ${TARGET_NAME}

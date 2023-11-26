@@ -5,7 +5,6 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QNetworkReply>
-#include <qcurl.h>
 #include "companydata.h"
 #define MAX_INVOICES_PER_LROE 1000
 
