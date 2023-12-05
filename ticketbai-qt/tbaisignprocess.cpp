@@ -1,6 +1,7 @@
 #include <QProcess>
 #include <QTemporaryFile>
 #include <QStandardPaths>
+#include <QSslSocket>
 #include "qticketbai.h"
 #include "tbaisignprocess.h"
 #include "tbaidocument.h"
@@ -31,6 +32,7 @@ bool TbaiSignProcess::checkSettings(const TbaiContext& context)
   std::cerr << "- Using TicketBAI software CIF:\t\t" <<  software.cif().toStdString() << std::endl;
   std::cerr << "- Using TicketBAI software:\t\t" << software.name().toStdString() << std::endl;
   std::cerr << "- Using TicketBAI Tax Authority:\t" << context.taxAuthorityUrl().toString().toStdString() << std::endl;
+  std::cerr << "- Qt supports SSL:\t" << (QSslSocket::supportsSsl() ? "Yes" : "No") << std::endl;
   std::cerr << "- Looking for certificate:\t\t";
   TBAI_FILE_CHECKER(certificate.path())
   std::cerr << "- Certificate password ?\t\t" << (certificate.password().isEmpty() ? "No" : "Yes") << std::endl;
