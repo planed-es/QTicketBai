@@ -93,6 +93,8 @@ if (BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
+string(REPLACE ";" " " XMLSECQT_CFLAGS_ALT "${XMLSECQT_CFLAGS}")
+string(REPLACE ";" " " XMLSECQT_LDFLAGS_ALT "${XMLSECQT_LDFLAGS}")
 configure_file(ticketbai-qt.pc.in ${TARGET_NAME}.pc @ONLY)
 
 install(FILES ${headers} DESTINATION include/ticketbai-qt)
