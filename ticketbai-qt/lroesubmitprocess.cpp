@@ -51,10 +51,9 @@ void LROESubmitProcess::scheduleNextQuery()
 {
   if (groups.length())
   {
-    QStringList tbaiFiles = groups.first();
-
+    submittingFiles = groups.first();
     groups.removeFirst();
-    makeQueryFor(tbaiFiles);
+    makeQueryFor(submittingFiles);
   }
   else
     emit finished();
@@ -88,10 +87,17 @@ void LROESubmitProcess::onResponseReceived(const Response& response)
   qDebug() << "  Document:";
   qDebug() << response.document.toByteArray(2) << "\n";
   // END TODO
-  if (response.status == 200)
+  if (response.status == 200 && response.type != "Incorrecto")
+  {
+    qDebug() << "LROESubmitProcess: successfully submit";
+    cleanupSubmittedFiles();
     scheduleNextQuery();
+  }
   else
+  {
+    qDebug() << "LROESubmitProcess: failed to submit";
     emit finished();
+  }
 }
 
 void LROESubmitProcess::breakDownQueryFor(const QStringList& tbaiFiles)
@@ -106,4 +112,18 @@ void LROESubmitProcess::breakDownQueryFor(const QStringList& tbaiFiles)
     }
     groups.last().push_back(tbaiFiles[i]);
   }
+}
+
+void LROESubmitProcess::cleanupSubmittedFiles()
+{
+  for (const QString& filename : submittingFiles)
+  {
+    QString filepath = dumpPathOrFallback() + '/' + filename;
+
+    if (QFile(filepath).remove())
+      qDebug() << "- remove submitted invoice" << filename;
+    else
+      qDebug() << "- failed to remove submitted invoice" << filepath;
+  }
+  submittingFiles.clear();
 }

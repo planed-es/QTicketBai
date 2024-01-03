@@ -30,8 +30,10 @@ private:
   void           makeQueryFor(const QStringList& tbaiFiles);
   void           scheduleNextQuery();
   void           onResponseReceived(const Response&);
+  void           cleanupSubmittedFiles();
 
   QVector<QStringList> groups;
+  QStringList submittingFiles;
 };
 
 #endif // LROESUBMITPROCESS_H
