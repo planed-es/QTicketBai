@@ -116,7 +116,7 @@ static QDomElement generateSoftwareXml(QDomDocument& document, const TbaiContext
 QDomElement AbstractTbaiDocument::generateFingerprint(const TbaiInvoiceInterface& invoice)
 {
   QDomElement footPrintEl = createElement("HuellaTBAI");
-  QDomElement deviceIdEl      = createElement("NumSerieDispositivo");
+  QDomElement deviceIdEl  = createElement("NumSerieDispositivo");
 
   deviceIdEl.appendChild(createTextNode(context().constSoftware().deviceUid()));
   if (invoice.previousInvoice())

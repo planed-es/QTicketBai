@@ -170,6 +170,8 @@ static QDomElement generateInvoiceData(QDomDocument& document, const TbaiInvoice
   QDomElement amountEl      = document.createElement("ImporteTotalFactura");
   QDomElement keysEl        = document.createElement("Claves");
 
+  if (invoice.description().length() == 0)
+    throw std::runtime_error("QTicketBai::TbaiDocument: invoice.description() cannot be empty");
   descriptionEl.appendChild(document.createTextNode(invoice.description().toUtf8()));
   amountEl.appendChild(document.createTextNode(invoice.formattedAmount()));
   for (auto vatRegime : invoice.vatRegimes())
