@@ -8,12 +8,39 @@
 #include "companydata.h"
 #define MAX_INVOICES_PER_LROE 1000
 
+static int getDocumentYear(const QString& filepath)
+{
+  QFile file(filepath);
+
+  if (file.open(QIODevice::ReadOnly))
+  {
+    QDomDocument document;
+    QDomNodeList list;
+
+    document.setContent(&file);
+    list = document.elementsByTagName("FechaExpedicionFactura");
+    if (!list.isEmpty())
+    {
+      QString text = list.item(0).toElement().text();
+      QDate date = QDate::fromString(text, "dd-MM-yyyy");
+
+      if (date.year() == 0)
+        throw std::runtime_error("Invalid date '" + text.toStdString() + "' in tbai document at " + filepath.toStdString());
+      return date.year();
+    }
+    throw std::runtime_error("Broken tbai document at " + filepath.toStdString());
+  }
+  throw std::runtime_error("Cannot open tbai document at " + filepath.toStdString());
+}
+
 LROESubmitProcess::LROESubmitProcess(const TbaiContext& context, QObject *parent) : LROEClient(context, parent)
 {
+  connect(this, &LROEClient::responseReceived, this, &LROESubmitProcess::onResponseReceived);
 }
 
 LROESubmitProcess::LROESubmitProcess(QObject *parent) : LROEClient(parent)
 {
+  connect(this, &LROEClient::responseReceived, this, &LROESubmitProcess::onResponseReceived);
 }
 
 QString LROESubmitProcess::dumpPathOrFallback() const
@@ -68,16 +95,21 @@ static void backupDocumentForDebugPurposes(const LROEDocument& document)
     qDebug() << "(!) Could not backup LROEDocument to /tmp/lroe-tmp.xml";
 }
 
+QString LROESubmitProcess::storagePathFromFileName(const QString& filename) const
+{
+  return dumpPathOrFallback() + '/' + filename;
+}
+
 void LROESubmitProcess::makeQueryFor(const QStringList &tbaiFiles)
 {
   LROEUploadDocument document(LROEDocument::Model240, LROEDocument::AddOperation);
-  QNetworkReply* reply;
+  int year = getDocumentYear(storagePathFromFileName(tbaiFiles.first()));
 
-  document.setActivityYear(2023);
   for (const QString& path : tbaiFiles)
-    document.appendInvoiceFromFile(dumpPathOrFallback() + '/' + path);
+    document.appendInvoiceFromFile(storagePathFromFileName(path));
+  document.setActivityYear(year);
   backupDocumentForDebugPurposes(document);
-  submit(document, std::bind(&LROESubmitProcess::onResponseReceived, this, std::placeholders::_1));
+  submit(document);
 }
 
 void LROESubmitProcess::onResponseReceived(const Response& response)
@@ -85,7 +117,7 @@ void LROESubmitProcess::onResponseReceived(const Response& response)
   // TODO
   qDebug() << "LROE remote server responded with:" << response;
   qDebug() << "  Document:";
-  qDebug() << response.document.toByteArray(2) << "\n";
+  qDebug() << qPrintable(response.document.toByteArray(2)) << "\n";
   // END TODO
   if (response.status == 200 && response.type != "Incorrecto")
   {
@@ -118,7 +150,7 @@ void LROESubmitProcess::cleanupSubmittedFiles()
 {
   for (const QString& filename : submittingFiles)
   {
-    QString filepath = dumpPathOrFallback() + '/' + filename;
+    QString filepath = storagePathFromFileName(filename);
 
     if (QFile(filepath).remove())
       qDebug() << "- remove submitted invoice" << filename;

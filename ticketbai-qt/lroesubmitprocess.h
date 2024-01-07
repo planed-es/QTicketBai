@@ -24,6 +24,7 @@ public:
 
 signals:
   void finished();
+  void errorOccured(Response);
 
 private:
   void           breakDownQueryFor(const QStringList& tbaiFiles);
@@ -31,6 +32,7 @@ private:
   void           scheduleNextQuery();
   void           onResponseReceived(const Response&);
   void           cleanupSubmittedFiles();
+  QString        storagePathFromFileName(const QString&) const;
 
   QVector<QStringList> groups;
   QStringList submittingFiles;
