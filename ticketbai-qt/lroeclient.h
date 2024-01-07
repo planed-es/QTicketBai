@@ -22,17 +22,21 @@ public:
     QDomDocument document;
   };
 
+  typedef std::function<void (const Response&)> Callback;
+
   explicit LROEClient(const TbaiContext&, QObject* parent = nullptr);
   explicit LROEClient(QObject* parent = nullptr);
   virtual ~LROEClient() {}
 
-  void submit(const LROEDocument& document, std::function<void(const Response&)> callback);
+  void submit(const LROEDocument& document, Callback callback = Callback());
 
-//protected:
+signals:
+  void responseReceived(Response);
+
+protected:
   QNetworkReply* sendDocument(const LROEDocument&);
   QJsonDocument  jsonHeaderFor(const LROEDocument&);
   Response       parseResponse(QNetworkReply*);
-  void           onResponseReceived(const Response&);
 
   const TbaiContext& context;
 };

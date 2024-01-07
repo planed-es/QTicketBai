@@ -45,7 +45,9 @@ void LROEClient::submit(const LROEDocument& document, std::function<void(const R
     if (lroeResponse.status != 200)
       qDebug() << "QNetworkReply: error:" << httpResponse->errorString();
     httpResponse->deleteLater();
-    callback(lroeResponse);
+    if (callback)
+      callback(lroeResponse);
+    emit responseReceived(lroeResponse);
   });
 }
 
