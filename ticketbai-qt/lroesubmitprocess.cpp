@@ -128,21 +128,32 @@ void LROESubmitProcess::onResponseReceived(const Response& response)
   else
   {
     qDebug() << "LROESubmitProcess: failed to submit";
+    emit errorOccured(response);
     emit finished();
   }
 }
 
 void LROESubmitProcess::breakDownQueryFor(const QStringList& tbaiFiles)
 {
+  int lastYear = 0;
+
   groups.reserve(tbaiFiles.size() / MAX_INVOICES_PER_LROE + 1);
   for (int i = 0 ; i < tbaiFiles.size() ; ++i)
   {
+    int invoiceYear = getDocumentYear(storagePathFromFileName(tbaiFiles[i]));
+
+    if (lastYear != 0 && lastYear != invoiceYear)
+    {
+      breakDownQueryFor(tbaiFiles.mid(i));
+      return ;
+    }
     if (i % MAX_INVOICES_PER_LROE == 0)
     {
       groups.push_back(QStringList());
       groups.last().reserve(MAX_INVOICES_PER_LROE);
     }
     groups.last().push_back(tbaiFiles[i]);
+    lastYear = invoiceYear;
   }
 }
 
