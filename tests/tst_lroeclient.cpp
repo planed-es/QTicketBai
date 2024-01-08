@@ -170,12 +170,12 @@ void LROEClientTest::canCancelInvoices()
 
   LROECancelDocument cancelDocument(LROEDocument::Model240);
   TbaiCancelDocument invoiceDocument;
-  invoice.m_number = InvoiceTest::getRandomString();
   invoiceDocument.createFrom(invoice);
-  cancelDocument.appendInvoice(invoiceDocument.toString());
+  xml = TbaiSignProcess::sign(invoiceDocument).xml;
+  cancelDocument.appendInvoice(xml);
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
-  qDebug() << response;
+  qDebug() << "cancel test response:" << response;
   std::cout << response.document.toString().toStdString() << std::endl;
   storeGeneratedDocument("canCancelInvoices", "LROEDocument",  document);
   storeGeneratedDocument("canCancelInvoices", "TBAIDocument", tbaiDocument);
