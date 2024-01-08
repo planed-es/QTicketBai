@@ -19,6 +19,15 @@ public:
 
   void useContext(const TbaiContext& value) { _context = &value; }
 
+  bool loadFrom(const QByteArray& xml);
+  bool loadFrom(const QString& xml) { return loadFrom(xml.toUtf8()); }
+  bool loadFromFile(const QString&);
+
+  void appendSignature(const QDomElement&);
+  bool isSigned() const;
+  QByteArray signature() const;
+  static QString signatureNamespace();
+
 protected:
   const TbaiContext& context() const;
   void prepareDocument();
@@ -27,6 +36,7 @@ protected:
 
   QDomElement root, headerEl;
   const TbaiContext* _context = nullptr;
+  bool includePreviousInvoiceInFingerprint = true;
 };
 
 #endif

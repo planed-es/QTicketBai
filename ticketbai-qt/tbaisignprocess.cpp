@@ -40,12 +40,12 @@ bool TbaiSignProcess::checkSettings(const TbaiContext& context)
   return certificate.isReady();
 }
 
-TbaiSignProcess::ReturnValue TbaiSignProcess::sign(TbaiDocument& document)
+TbaiSignProcess::ReturnValue TbaiSignProcess::sign(AbstractTbaiDocument& document)
 {
   return sign(QTicketBai::context().constCertificate(), document);
 }
 
-TbaiSignProcess::ReturnValue TbaiSignProcess::sign(const TbaiCertificate& tbaiCertificate, TbaiDocument& document)
+TbaiSignProcess::ReturnValue TbaiSignProcess::sign(const TbaiCertificate& tbaiCertificate, AbstractTbaiDocument& document)
 {
 #ifdef TICKETBAIQT_WITH_SIGNING
   ReturnValue retval;
@@ -58,7 +58,7 @@ TbaiSignProcess::ReturnValue TbaiSignProcess::sign(const TbaiCertificate& tbaiCe
   certificate.setName("QTicketBai/pkcs12");
 
   signer.withSignatureId("Signature")
-        .useNamespace(TbaiDocument::signatureNamespace())
+        .useNamespace(AbstractTbaiDocument::signatureNamespace())
         .useDocument(document)
         .useSslKey(tbaiCertificate.sslKey(), tbaiCertificate.password().toUtf8())
         .useCertificate(certificate);

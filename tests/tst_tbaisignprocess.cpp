@@ -2,6 +2,7 @@
 #include "tst_tbaisignprocess.h"
 #include "ticketbai-qt/tbaisignprocess.h"
 #include "ticketbai-qt/tbaicertificate.h"
+#include "ticketbai-qt/tbaidocument.h"
 #include "xmlsec-qt/xmlverify.h"
 #include "helper_invoice.h"
 

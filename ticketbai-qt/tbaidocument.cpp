@@ -372,54 +372,6 @@ TbaiDocument& TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
   return *this;
 }
 
-bool TbaiDocument::loadFromFile(const QString& path)
-{
-  QFile file(path);
-
-  if (file.open(QIODevice::ReadOnly) && loadFrom(file.readAll()))
-    return true;
-  qDebug() << "TbaiDocument::loadFromFile: could not load file" << path;
-  return false;
-}
-
-bool TbaiDocument::loadFrom(const QByteArray& xml)
-{
-  QString errorMessage;
-  int errorLine, errorColumn;
-
-  clear();
-  if (setContent(xml, false, &errorMessage, &errorLine, &errorColumn))
-    root = elementsByTagName("T:TicketBai").item(0).toElement();
-  else
-    qDebug() << "TbaiDocument::loadFrom: xml parse error at" << errorLine << ':' << errorColumn << ':' << errorMessage;
-  return !root.isNull();
-}
-
-void TbaiDocument::appendSignature(const QDomElement& signatureEl)
-{
-  root.appendChild(signatureEl);
-}
-
-bool TbaiDocument::isSigned() const
-{
-  return !root.elementsByTagName(signatureNamespace() + ":Signature").isEmpty();
-}
-
-QByteArray TbaiDocument::signature() const
-{
-  QDomNodeList matches = root.elementsByTagName(signatureNamespace() + ":SignatureValue");
-  QDomNode signatureNode = matches.item(0);
-  QString signature = signatureNode.lastChild().toText().data();
-
-  if (signatureNode.isNull())
-    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document is not signed.");
-  if (matches.count() != 1)
-    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document contains several signatures.");
-  if (signature.length() == 0)
-    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document contains a signature, but it is empty.");
-  return signature.toUtf8();
-}
-
 static QString getDefaultFileNameFor(const TbaiInvoiceInterface& invoice)
 {
   if (invoice.recipients().size() > 0)
@@ -441,9 +393,4 @@ QString TbaiDocument::getFileNameFor(const TbaiInvoiceInterface& invoice)
   else
     title = QUrl::toPercentEncoding(title, " ");
   return time + '_' + title + ".xml";
-}
-
-QString TbaiDocument::signatureNamespace()
-{
-  return "ds";
 }

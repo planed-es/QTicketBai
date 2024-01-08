@@ -31,6 +31,7 @@ TbaiCancelDocument& TbaiCancelDocument::createFrom(const TbaiInvoiceInterface& i
 {
   QDomElement invoiceEl = createElement("IDFactura");
 
+  includePreviousInvoiceInFingerprint = false;
   prepareDocument();
   invoiceEl.appendChild(generateEmitter());
   invoiceEl.appendChild(generateInvoiceHeader(*this, invoice));

@@ -4,7 +4,7 @@
 # include <QObject>
 # include <QProcess>
 # include <QTemporaryFile>
-# include "tbaidocument.h"
+# include "abstracttbaidocument.h"
 # include "context.h"
 
 class QProcess;
@@ -24,8 +24,8 @@ public:
     QByteArray xml, signature;
   };
 
-  static ReturnValue sign(TbaiDocument&);
-  static ReturnValue sign(const TbaiCertificate&, TbaiDocument&);
+  static ReturnValue sign(AbstractTbaiDocument&);
+  static ReturnValue sign(const TbaiCertificate&, AbstractTbaiDocument&);
 };
 
 #endif // TBAISIGNPROCESS_H

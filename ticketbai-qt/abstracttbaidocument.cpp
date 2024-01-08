@@ -1,6 +1,31 @@
 #include "abstracttbaidocument.h"
 #include "tbaiinvoiceinterface.h"
 #include "qticketbai.h"
+#include <QFile>
+
+bool AbstractTbaiDocument::loadFromFile(const QString& path)
+{
+  QFile file(path);
+
+  if (file.open(QIODevice::ReadOnly) && loadFrom(file.readAll()))
+    return true;
+  qDebug() << "AbstractTbaiDocument::loadFromFile: could not load file" << path;
+  return false;
+}
+
+bool AbstractTbaiDocument::loadFrom(const QByteArray& xml)
+{
+  QString rootTag = "T:" + documentElementType();
+  QString errorMessage;
+  int errorLine, errorColumn;
+
+  clear();
+  if (setContent(xml, false, &errorMessage, &errorLine, &errorColumn))
+    root = elementsByTagName(rootTag).item(0).toElement();
+  else
+    qDebug() << "AbstractTbaiDocument::loadFrom: xml parse error at" << errorLine << ':' << errorColumn << ':' << errorMessage;
+  return !root.isNull();
+}
 
 void AbstractTbaiDocument::prepareDocument()
 {
@@ -117,11 +142,45 @@ QDomElement AbstractTbaiDocument::generateFingerprint(const TbaiInvoiceInterface
 {
   QDomElement footPrintEl = createElement("HuellaTBAI");
   QDomElement deviceIdEl  = createElement("NumSerieDispositivo");
+  auto deviceUid = context().constSoftware().deviceUid();
 
-  deviceIdEl.appendChild(createTextNode(context().constSoftware().deviceUid()));
-  if (invoice.previousInvoice())
+  if (invoice.previousInvoice() && includePreviousInvoiceInFingerprint)
     footPrintEl.appendChild(generatePreviousInvoiceXml(*this, *invoice.previousInvoice()));
   footPrintEl.appendChild(generateSoftwareXml(*this, context()));
-  footPrintEl.appendChild(deviceIdEl);
+  if (deviceUid.length())
+  {
+    deviceIdEl.appendChild(createTextNode(deviceUid));
+    footPrintEl.appendChild(deviceIdEl);
+  }
   return footPrintEl;
+}
+
+QString AbstractTbaiDocument::signatureNamespace()
+{
+  return "ds";
+}
+
+void AbstractTbaiDocument::appendSignature(const QDomElement& signatureEl)
+{
+  root.appendChild(signatureEl);
+}
+
+bool AbstractTbaiDocument::isSigned() const
+{
+  return !root.elementsByTagName(signatureNamespace() + ":Signature").isEmpty();
+}
+
+QByteArray AbstractTbaiDocument::signature() const
+{
+  QDomNodeList matches = root.elementsByTagName(signatureNamespace() + ":SignatureValue");
+  QDomNode signatureNode = matches.item(0);
+  QString signature = signatureNode.lastChild().toText().data();
+
+  if (signatureNode.isNull())
+    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document is not signed.");
+  if (matches.count() != 1)
+    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document contains several signatures.");
+  if (signature.length() == 0)
+    throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document contains a signature, but it is empty.");
+  return signature.toUtf8();
 }
