@@ -39,13 +39,14 @@ public:
   {
     QDomElement fromEl = createElement("Desde");
     QDomElement toEl   = createElement("Hasta");
-    const QString format = "dd-mm-YYYY";
+    const QString format = "dd-MM-yyyy";
 
     fromEl.appendChild(createTextNode(from.toString(format)));
     toEl.appendChild(createTextNode(to.toString(format)));
     resetElement(dateFilter);
     dateFilter.appendChild(fromEl);
     dateFilter.appendChild(toEl);
+    invoiceHeaderEl.appendChild(dateFilter);
   }
 
   void setRecipient(const CompanyData& company)
