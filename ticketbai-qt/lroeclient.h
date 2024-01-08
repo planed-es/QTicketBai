@@ -13,6 +13,7 @@ class QNetworkReply;
 class TICKETBAIQT_EXPORT LROEClient : public QObject
 {
   Q_OBJECT
+  friend class LROEClientTest;
 public:
   struct Response
   {

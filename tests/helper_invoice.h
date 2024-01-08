@@ -2,6 +2,7 @@
 # define HELPER_INVOICE_H
 
 # include "ticketbai-qt/tbaiinvoiceinterface.h"
+# include <random>
 
 class InvoiceTest : public TbaiInvoiceInterface
 {
@@ -23,6 +24,40 @@ public:
       0.014
     }
   };
+
+  static QByteArray getRandomString()
+  {
+    const QByteArray possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+    const int randomStringLength = 12;
+    QByteArray randomString;
+
+    for(int i = 0 ; i < randomStringLength ; ++i)
+    {
+      int index = rand() % possibleCharacters.length();
+      auto nextChar = possibleCharacters.at(index);
+      randomString.push_back(nextChar);
+    }
+    return randomString;
+  }
+
+  template<typename INVOICE_TYPE = InvoiceTest>
+  static INVOICE_TYPE factory(const QString& name = "Fish sale")
+  {
+    INVOICE_TYPE model;
+
+    model.m_number = getRandomString();
+    model.m_name = name;
+    return model;
+  }
+
+  template<typename INVOICE_TYPE = InvoiceTest>
+  static INVOICE_TYPE factory(const QString& name, TbaiInvoiceInterface& previous)
+  {
+    INVOICE_TYPE model = factory<INVOICE_TYPE>(name);
+
+    model.m_previousInvoice = &previous;
+    return model;
+  }
 
   TbaiInvoiceInterface* previousInvoice() const override { return m_previousInvoice; }
   Type invoiceType() const override { return InvoiceType; }
@@ -62,6 +97,11 @@ public:
     }
   };
   QList<TbaiInvoiceInterface*> m_corrected;
+
+  static InvoiceCorrectionTest factory(const QString& name, TbaiInvoiceInterface& previous)
+  {
+    return InvoiceTest::factory<InvoiceCorrectionTest>(name, previous);
+  }
 
   TbaiInvoiceInterface* previousInvoice() const override { return m_previousInvoice; }
   TbaiInvoices correctedInvoices() const override { return m_corrected; }

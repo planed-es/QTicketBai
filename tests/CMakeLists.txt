@@ -25,6 +25,14 @@ add_executable(lroeclient
 add_test(NAME lroeclient COMMAND lroeclient)
 target_link_libraries(lroeclient PRIVATE ${test_libraries})
 
+add_executable(lroesubmitprocess
+  tst_lroesubmitprocess.cpp
+  helper_tbai_test.cpp
+  helper_xmlsec_test.cpp
+)
+add_test(NAME lroesubmitprocess COMMAND lroesubmitprocess)
+target_link_libraries(lroesubmitprocess PRIVATE ${test_libraries})
+
 add_executable(tbaiinvoice
   tst_tbaiinvoice.cpp
   helper_tbai_test.cpp

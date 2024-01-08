@@ -1,6 +1,6 @@
 #include "tst_lroeclient.h"
 #include "ticketbai-qt/tbaicertificate.h"
-#include "ticketbai-qt/lroesubmitprocess.h"
+#include "ticketbai-qt/lroeclient.h"
 #include "ticketbai-qt/companydata.h"
 #include "ticketbai-qt/tbaiinvoiceinterface.h"
 #include "ticketbai-qt/tbaidocument.h"
@@ -15,21 +15,6 @@
 #include <random>
 
 QTEST_MAIN(LROEClientTest)
-
-QByteArray getRandomString()
-{
- const QByteArray possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
- const int randomStringLength = 12;
-
- QByteArray randomString;
- for(int i=0; i<randomStringLength; ++i)
- {
-   int index = rand() % possibleCharacters.length();
-   auto nextChar = possibleCharacters.at(index);
-   randomString.push_back(nextChar);
- }
- return randomString;
-}
 
 static void storeGeneratedDocument(const QString test, const QString& name, const QDomDocument& document)
 {
@@ -48,16 +33,14 @@ static void storeGeneratedDocument(const QString test, const QString& name, cons
 
 void LROEClientTest::canGenerateInvoices()
 {
-  LROESubmitProcess    lroe;
+  LROEClient           lroe;
   LROEUploadDocument   document(LROEDocument::Model240);
   LROEClient::Response response;
   QString invoiceXml;
-  InvoiceTest invoice;
+  InvoiceTest invoice = InvoiceTest::factory("Parrot sale");
   QNetworkReply* reply;
   TbaiDocument tbaiDocument;
 
-  invoice.m_number = getRandomString();
-  invoice.m_name = "Parrot sale";
   tbaiDocument.createFrom(invoice);
   auto xml = TbaiSignProcess::sign(tbaiDocument).xml;
   QVERIFY(xml.length() > 0);
@@ -73,21 +56,17 @@ void LROEClientTest::canGenerateInvoices()
   QCOMPARE(response.type, "Correcto");
 }
 
-void LROEClientTest::canChainInvoices()
+void LROEClientTest::canSendDocument()
 {
-  LROESubmitProcess    lroe;
+  LROEClient           lroe;
   LROEUploadDocument   document(LROEDocument::Model240);
   LROEClient::Response response;
   QString invoiceXml;
-  InvoiceTest invoice, invoice2;
+  InvoiceTest invoice = InvoiceTest::factory("Parrot sale");
+  InvoiceTest invoice2 = InvoiceTest::factory("Bird sale", invoice);
   QNetworkReply* reply;
   TbaiDocument tbaiDocumentA, tbaiDocumentB;
 
-  invoice.m_number = getRandomString();
-  invoice.m_name = "Parrot sale";
-  invoice2.m_number = getRandomString();
-  invoice2.m_name = "Bird sale";
-  invoice2.m_previousInvoice = &invoice;
   tbaiDocumentA.createFrom(invoice);
   auto result = TbaiSignProcess::sign(tbaiDocumentA);
   invoice.m_signature = result.signature;
@@ -99,12 +78,12 @@ void LROEClientTest::canChainInvoices()
   QVERIFY(invoice2.signature().length() > 0);
   QVERIFY(result2.xml.length() > 0);
   document.setActivityYear(invoice.date().date().year());
+  
   document.appendInvoice(result.xml);
   document.appendInvoice(result2.xml);
 
   reply = lroe.sendDocument(document);
   response = lroe.parseResponse(reply);
-  qDebug() << response;
   storeGeneratedDocument("canChainInvoices", "LROEDocument",  document);
   storeGeneratedDocument("canChainInvoices", "TBAIDocumentA", tbaiDocumentA);
   storeGeneratedDocument("canChainInvoices", "TBAIDocumentB", tbaiDocumentB);
@@ -115,21 +94,16 @@ void LROEClientTest::canChainInvoices()
 
 void LROEClientTest::canRectifyInvoices()
 {
-  LROESubmitProcess    lroe;
+  LROEClient           lroe;
   LROEUploadDocument   document(LROEDocument::Model240);
   LROEClient::Response response;
   QString invoiceXml;
-  InvoiceTest invoice;
-  InvoiceCorrectionTest invoice2;
+  InvoiceTest invoice = InvoiceTest::factory("Parrot sale");
+  InvoiceCorrectionTest invoice2 = InvoiceCorrectionTest::factory("Parrot sale correction", invoice);
   QNetworkReply* reply;
   TbaiDocument tbaiDocumentA, tbaiDocumentB;
 
-  invoice.m_number = getRandomString();
-  invoice.m_name = "Parrot sale";
   invoice2.m_series = "SERIE01";
-  invoice2.m_number = getRandomString();
-  invoice2.m_name = "Parrot sale correction";
-  invoice2.m_previousInvoice = &invoice;
   invoice2.m_corrected << &invoice;
   tbaiDocumentA.createFrom(invoice);
   auto result = TbaiSignProcess::sign(tbaiDocumentA);
@@ -177,15 +151,13 @@ void LROEClientTest::canQueryInvoices()
 
 void LROEClientTest::canCancelInvoices()
 {
-  LROESubmitProcess    lroe;
+  LROEClient           lroe;
   LROEUploadDocument   document(LROEDocument::Model240);
   LROEClient::Response response;
-  InvoiceTest    invoice;
+  InvoiceTest    invoice = InvoiceTest::factory("Parrot sale");
   QNetworkReply* reply;
   TbaiDocument tbaiDocument;
 
-  invoice.m_number = getRandomString();
-  invoice.m_name = "Parrot sale";
   tbaiDocument.createFrom(invoice);
   auto xml = TbaiSignProcess::sign(tbaiDocument).xml;
   QVERIFY(xml.length() > 0);
@@ -198,7 +170,7 @@ void LROEClientTest::canCancelInvoices()
 
   LROECancelDocument cancelDocument(LROEDocument::Model240);
   TbaiCancelDocument invoiceDocument;
-  invoice.m_number = getRandomString();
+  invoice.m_number = InvoiceTest::getRandomString();
   invoiceDocument.createFrom(invoice);
   cancelDocument.appendInvoice(invoiceDocument.toString());
   reply = lroe.sendDocument(document);
