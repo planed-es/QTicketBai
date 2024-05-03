@@ -1,6 +1,7 @@
 #include "invoicecontroller.h"
 #include <ticketbai-qt/context.h>
 #include <ticketbai-qt/tbaisignprocess.h>
+#include <ticketbai-qt/tbaidocument.h>
 
 InvoiceController* InvoiceController::self = nullptr;
 
@@ -39,7 +40,7 @@ void InvoiceController::remove(Invoice* invoice)
       emit cantRemoveSignedInvoice();
   }
 }
-#include <iostream>
+
 bool InvoiceController::sign(Invoice* invoice)
 {
   if (invoice)
@@ -56,8 +57,6 @@ bool InvoiceController::sign(Invoice* invoice)
 
       document.useContext(_context);
       document.createFrom(*invoice);
-
-      std::cout << document.toString(4).toStdString() << std::endl;
 
       result = TbaiSignProcess::sign(_context.constCertificate(), document);
       if (result)

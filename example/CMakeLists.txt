@@ -12,7 +12,7 @@ find_package(PkgConfig)
 find_package(QT NAMES Qt6 COMPONENTS Core Gui Qml QuickControls2 Network Xml REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Qml QuickControls2 Network Xml)
 
-pkg_check_modules(XMLSECQT REQUIRED xmlsec-qt5>=1.0.0)
+pkg_check_modules(XMLSECQT REQUIRED xmlsec-qt6>=1.0.0)
 
 include_directories(${XMLSECQT_INCLUDE_DIRS})
 
