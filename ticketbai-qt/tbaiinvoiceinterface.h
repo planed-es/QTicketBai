@@ -30,6 +30,7 @@ public:
   virtual TbaiInvoiceInterface* previousInvoice() const = 0;
   virtual TbaiInvoices          correctedInvoices() const { return {}; }
   virtual Type                  invoiceType() const = 0;
+  virtual CorrectionType        correctionType() const { return UndefinedCorrection; }
   virtual QList<VatRegime>      vatRegimes() const { return {DefaultRegime}; }
   virtual QList<VatBreakdown>   vatBreakdowns() const = 0;
   virtual const QByteArray&     signature() const = 0;

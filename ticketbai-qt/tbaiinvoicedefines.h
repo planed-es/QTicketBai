@@ -85,6 +85,14 @@ public:
     VatExemptedDueToLocalization
   };
   Q_ENUM(NotSubjectToVatReason)
+
+  enum CorrectionType
+  {
+    UndefinedCorrection,
+    SubstitutionCorrection,
+    DifferenceCorrection
+  };
+  Q_ENUM(CorrectionType)
 };
 
 #endif

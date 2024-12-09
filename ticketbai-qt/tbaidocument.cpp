@@ -97,7 +97,15 @@ static QDomElement generateCorrectionInvoiceHeader(QDomDocument& document, const
   QDomElement typeEl = document.createElement("Tipo");
 
   codeEl.appendChild(document.createTextNode(getCodeForInvoiceType(invoice.invoiceType())));
-  typeEl.appendChild(document.createTextNode("S")); // S for Substitution, I for difference
+  switch (invoice.correctionType())
+  {
+  case TbaiInvoiceInterface::DifferenceCorrection:
+    typeEl.appendChild(document.createTextNode("I")); // I for difference
+    break ;
+  default:
+    typeEl.appendChild(document.createTextNode("S")); // S for Substitution
+    break ;
+  }
   // Missing optional element(s): ImporteRectificacion and Sustitutiva, or ImporteRectificacionSustitutiva
   root.appendChild(codeEl);
   root.appendChild(typeEl);
