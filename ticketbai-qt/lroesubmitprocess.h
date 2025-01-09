@@ -24,6 +24,7 @@ public:
 
 signals:
   void finished();
+  void success();
   void errorOccured(Response);
 
 private:

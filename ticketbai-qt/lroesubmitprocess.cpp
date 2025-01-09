@@ -83,7 +83,10 @@ void LROESubmitProcess::scheduleNextQuery()
     makeQueryFor(submittingFiles);
   }
   else
+  {
+    emit success();
     emit finished();
+  }
 }
 
 static void backupDocumentForDebugPurposes(const LROEDocument& document)
@@ -119,7 +122,7 @@ void LROESubmitProcess::onResponseReceived(const Response& response)
   qDebug() << "  Document:";
   qDebug() << qPrintable(response.document.toByteArray(2)) << "\n";
   // END TODO
-  if (response.status == 200 && response.type != "Incorrecto")
+  if (response.status == 200 && response.type == "Correcto")
   {
     qDebug() << "LROESubmitProcess: successfully submit";
     cleanupSubmittedFiles();
