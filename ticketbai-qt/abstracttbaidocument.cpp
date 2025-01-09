@@ -3,6 +3,16 @@
 #include "qticketbai.h"
 #include <QFile>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+typedef QDomDocument::ParseResult XmlParseResult;
+#else
+struct XmlParseResult
+{
+  int errorLine, errorColumn;
+  QString errorMessage;
+};
+#endif
+
 bool AbstractTbaiDocument::loadFromFile(const QString& path)
 {
   QFile file(path);
@@ -18,12 +28,17 @@ bool AbstractTbaiDocument::loadFrom(const QByteArray& xml)
   QString rootTag = "T:" + documentElementType();
   QString errorMessage;
   int errorLine, errorColumn;
+  XmlParseResult result;
 
   clear();
-  if (setContent(xml, false, &errorMessage, &errorLine, &errorColumn))
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+  if (result = setContent(xml))
+#else
+  if (setContent(xml, false, &result.errorMessage, &result.errorLine, &result.errorColumn))
+#endif
     root = elementsByTagName(rootTag).item(0).toElement();
   else
-    qDebug() << "AbstractTbaiDocument::loadFrom: xml parse error at" << errorLine << ':' << errorColumn << ':' << errorMessage;
+    qDebug() << "AbstractTbaiDocument::loadFrom: xml parse error at" << result.errorLine << ':' << result.errorColumn << ':' << result.errorMessage;
   return !root.isNull();
 }
 
