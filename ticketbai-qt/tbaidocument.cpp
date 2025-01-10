@@ -361,9 +361,8 @@ static QDomElement pluralSubjectHintXml(QDomDocument& document, const TbaiInvoic
 
 TbaiDocument& TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
 {
-  QDomElement subjectsEl      = createElement("Sujetos");
-  QDomElement invoiceEl       = createElement("Factura");
-  QDomElement footPrintEl     = createElement("HuellaTBAI");
+  QDomElement subjectsEl = createElement("Sujetos");
+  QDomElement invoiceEl  = createElement("Factura");
 
   prepareDocument();
   subjectsEl.appendChild(generateEmitter());
