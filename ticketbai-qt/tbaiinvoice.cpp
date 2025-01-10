@@ -9,6 +9,19 @@
 # include <QrCodeGenerator.h>
 #endif
 
+double tbaiInvoiceTotalAmount(const TbaiInvoiceInterface& invoice)
+{
+  double total = 0;
+  for (const auto& breakdown : invoice.vatBreakdowns())
+    total += breakdown.total();
+  return total;
+}
+
+QString tbaiInvoiceFormattedAmount(const TbaiInvoiceInterface& invoice)
+{
+  return QString::number(tbaiInvoiceTotalAmount(invoice), 'f', 2);
+}
+
 TbaiInvoice::TbaiInvoice(const TbaiContext& context, const TbaiInvoiceInterface* ptr) : context(context), invoice(*ptr)
 {}
 
@@ -54,7 +67,7 @@ QUrl TbaiInvoice::getUrl() const
   url += "?id=" + QUrl::toPercentEncoding(getIdWithCRC());
   url += "&s="  + QUrl::toPercentEncoding(invoice.series());
   url += "&nf=" + QUrl::toPercentEncoding(invoice.number());
-  url += "&i="  + QUrl::toPercentEncoding(invoice.formattedAmount());
+  url += "&i="  + QUrl::toPercentEncoding(tbaiInvoiceFormattedAmount(invoice));
   url += "&cr=" + QUrl::toPercentEncoding(generateCRC(url));
   return QUrl(url);
 }

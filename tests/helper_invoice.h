@@ -67,12 +67,6 @@ public:
   const QByteArray& number() const override { return m_number; }
   const QString&    name() const override { return m_name; }
   const QString&    description() const override { return m_name; }
-  double            amount() const override
-  {
-    double total = 0;
-    for (const auto& i : m_breakdowns) total += i.total();
-    return total;
-  }
   const Recipients& recipients() const override { return m_recipients; }
   QList<VatBreakdown> vatBreakdowns() const override { return m_breakdowns; }
 };
@@ -112,7 +106,6 @@ public:
   const QByteArray& number() const override { return m_number; }
   const QString&    name() const override { return m_name; }
   const QString&    description() const override { return m_name; }
-  double            amount() const override { return 23; }
   const Recipients& recipients() const override { return m_recipients; }
   QList<VatBreakdown> vatBreakdowns() const override { return m_breakdowns; }
 };

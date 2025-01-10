@@ -7,6 +7,8 @@
 #define TBAI_VERSION          "1.2"
 #define TBAI_SOFTWARE_VERSION "1.0"
 
+QString tbaiInvoiceFormattedAmount(const TbaiInvoiceInterface&);
+
 static const QMap<TbaiInvoiceInterface::VatRegime, QByteArray> vatRegimes = {
   {TbaiInvoiceInterface::DefaultRegime,                                                                          "01"},
   {TbaiInvoiceInterface::ExportationRegime,                                                                      "02"},
@@ -39,7 +41,6 @@ static const QMap<TbaiInvoiceInterface::VatExemption, QByteArray> vatExemptionCo
 
 TbaiDocument::TbaiDocument()
 {
-
 }
 
 QDomElement generateContactXml(QDomDocument& document, const CompanyData& contact);
@@ -181,7 +182,7 @@ static QDomElement generateInvoiceData(QDomDocument& document, const TbaiInvoice
   if (invoice.description().length() == 0)
     throw std::runtime_error("QTicketBai::TbaiDocument: invoice.description() cannot be empty");
   descriptionEl.appendChild(document.createTextNode(invoice.description().toUtf8()));
-  amountEl.appendChild(document.createTextNode(invoice.formattedAmount()));
+  amountEl.appendChild(document.createTextNode(tbaiInvoiceFormattedAmount(invoice)));
   for (auto vatRegime : invoice.vatRegimes())
   {
     QDomElement keyEl       = document.createElement("IDClave");

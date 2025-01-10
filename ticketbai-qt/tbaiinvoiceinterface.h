@@ -40,14 +40,6 @@ public:
   virtual const QString&        name() const = 0;
   virtual const QString&        description() const = 0;
   virtual const Recipients&     recipients() const = 0;
-  virtual QString               formattedAmount() const { return QString::number(amount(), 'f', 2); }
-  virtual double                amount() const
-  {
-    double total = 0;
-    for (const VatBreakdown& breakdown : vatBreakdowns())
-      total += breakdown.total();
-    return total;
-  }
 };
 
 #endif
