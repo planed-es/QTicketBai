@@ -31,6 +31,7 @@ bool TbaiSignProcess::checkSettings(const TbaiContext& context)
   std::cerr << "Checking configuration for QTicketBAI:" << std::endl;
   std::cerr << "- Using TicketBAI software CIF:\t\t" <<  software.cif().toStdString() << std::endl;
   std::cerr << "- Using TicketBAI software:\t\t" << software.name().toStdString() << std::endl;
+  std::cerr << "- Using TicketBAI licence:\t\t" << software.license().toStdString() << std::endl;
   std::cerr << "- Using TicketBAI Tax Authority:\t" << context.taxAuthorityUrl().toString().toStdString() << std::endl;
   std::cerr << "- Qt supports SSL:\t" << (QSslSocket::supportsSsl() ? "Yes" : "No") << std::endl;
   std::cerr << "- Looking for certificate:\t\t";
