@@ -64,6 +64,7 @@ QUrl TbaiInvoice::getUrl() const
 {
   QByteArray url = context.taxAuthorityUrl().toString().toUtf8();
 
+  if (url.size() && url.back() != '/') url += "/";
   url += "?id=" + QUrl::toPercentEncoding(getIdWithCRC());
   url += "&s="  + QUrl::toPercentEncoding(invoice.series());
   url += "&nf=" + QUrl::toPercentEncoding(invoice.number());
