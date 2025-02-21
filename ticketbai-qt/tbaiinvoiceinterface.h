@@ -1,6 +1,7 @@
 #ifndef  TBAIINVOICEINTERFACE_H
 # define TBAIINVOICEINTERFACE_H
 
+# include <cmath>
 # include <QDateTime>
 # include <QByteArray>
 # include "tbaiinvoicedefines.h"
@@ -13,6 +14,12 @@ public:
   typedef QList<Recipient> Recipients;
   typedef QList<TbaiInvoiceInterface*> TbaiInvoices;
 
+  enum TotalPolicy
+  {
+    NormalTotal,
+    AlternativeTotal
+  };
+
   struct VatBreakdown
   {
     NotSubjectToVatReason vatState        = SubjectToVat;
@@ -22,9 +29,22 @@ public:
     double                taxRate         = 0;
     double                recargoRate     = 0;
     bool                  recargoSimplifiedRegime = false;
-    double                taxFee()     const { return base * taxRate; }
-    double                recargoFee() const { return base * recargoRate; }
-    double                total()      const { return base + taxFee() + recargoFee(); }
+    TotalPolicy           policy          = NormalTotal;
+    double                taxFee()     const
+    {
+      switch (policy) { case AlternativeTotal: return std::round(base * taxRate * 100) / 100; }
+      return base * taxRate;
+    }
+    double                recargoFee() const
+    {
+      switch (policy) { case AlternativeTotal: return std::round(base * recargoRate * 100) / 100; }
+      return base * recargoRate;
+    }
+    double                total()      const
+    {
+      switch (policy) { case AlternativeTotal: return std::round((base + taxFee() + recargoFee()) * 100) / 100; }
+      return base + taxFee() + recargoFee();
+    }
   };
 
   virtual TbaiInvoiceInterface* previousInvoice() const = 0;
