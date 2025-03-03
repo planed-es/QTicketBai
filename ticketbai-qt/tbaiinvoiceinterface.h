@@ -1,6 +1,7 @@
 #ifndef  TBAIINVOICEINTERFACE_H
 # define TBAIINVOICEINTERFACE_H
 
+# include <cmath>
 # include <QDateTime>
 # include <QByteArray>
 # include "tbaiinvoicedefines.h"
@@ -22,9 +23,9 @@ public:
     double                taxRate         = 0;
     double                recargoRate     = 0;
     bool                  recargoSimplifiedRegime = false;
-    double                taxFee()     const { return base * taxRate; }
-    double                recargoFee() const { return base * recargoRate; }
-    double                total()      const { return base + taxFee() + recargoFee(); }
+    double                taxFee()     const { return std::round(base * taxRate * 100) / 100; }
+    double                recargoFee() const { return std::round(base * recargoRate * 100) / 100; }
+    double                total()      const { return std::round((base + taxFee() + recargoFee()) * 100) / 100; }
   };
 
   virtual TbaiInvoiceInterface* previousInvoice() const = 0;
