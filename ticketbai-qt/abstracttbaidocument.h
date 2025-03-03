@@ -28,11 +28,16 @@ public:
   QByteArray signature() const;
   static QString signatureNamespace();
 
+  QByteArray previousInvoiceSerie() const;
+  QByteArray previousInvoiceNumber() const;
+
 protected:
   const TbaiContext& context() const;
   void prepareDocument();
   QDomElement generateFingerprint(const TbaiInvoiceInterface&);
   QDomElement generateEmitter();
+
+  QDomElement previousInvoiceElement() const;
 
   QDomElement root, headerEl;
   const TbaiContext* _context = nullptr;
