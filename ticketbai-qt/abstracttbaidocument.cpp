@@ -199,3 +199,28 @@ QByteArray AbstractTbaiDocument::signature() const
     throw std::runtime_error("TbaiDocument::getSignature: TicketBAI document contains a signature, but it is empty.");
   return signature.toUtf8();
 }
+
+QDomElement AbstractTbaiDocument::previousInvoiceElement() const
+{
+  return root.elementsByTagName("EncadenamientoFacturaAnterior").at(0).toElement();
+}
+
+QByteArray AbstractTbaiDocument::previousInvoiceSerie() const
+{
+  return previousInvoiceElement()
+    .elementsByTagName("SerieFacturaAnterior")
+    .at(0)
+    .toElement()
+    .text()
+    .toUtf8();
+}
+
+QByteArray AbstractTbaiDocument::previousInvoiceNumber() const
+{
+  return previousInvoiceElement()
+    .elementsByTagName("NumFacturaAnterior")
+    .at(0)
+    .toElement()
+    .text()
+    .toUtf8();
+}

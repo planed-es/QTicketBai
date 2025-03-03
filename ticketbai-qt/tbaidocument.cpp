@@ -380,6 +380,43 @@ TbaiDocument& TbaiDocument::createFrom(const TbaiInvoiceInterface& invoice)
   return *this;
 }
 
+QDomElement TbaiDocument::invoiceHeader() const
+{
+  return root.elementsByTagName("CabeceraFactura").at(0).toElement();
+}
+
+QByteArray TbaiDocument::invoiceNumber() const
+{
+  return invoiceHeader()
+    .elementsByTagName("NumFactura")
+    .at(0)
+    .toElement()
+    .text()
+    .toUtf8();
+}
+
+QByteArray TbaiDocument::invoiceSerie() const
+{
+  return invoiceHeader()
+    .elementsByTagName("SerieFactura")
+    .at(0)
+    .toElement()
+    .text()
+    .toUtf8();
+}
+
+QDate TbaiDocument::invoiceDate() const
+{
+  return QDate::fromString(
+    invoiceHeader()
+      .elementsByTagName("FechaExpedicionFactura")
+      .at(0)
+      .toElement()
+      .text(),
+    "dd-MM-yyyy"
+  );
+}
+
 static QString getDefaultFileNameFor(const TbaiInvoiceInterface& invoice)
 {
   if (invoice.recipients().size() > 0)
