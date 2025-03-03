@@ -1,7 +1,9 @@
 #include "lroesubmitprocess.h"
 #include "tbaicertificate.h"
 #include "uploaddocument.h"
+#include "lroeuploadresponse.h"
 #include <QDir>
+#include <QFileInfo>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QNetworkReply>
@@ -125,12 +127,15 @@ void LROESubmitProcess::onResponseReceived(const Response& response)
   if (response.status == 200 && response.type == "Correcto")
   {
     qDebug() << "LROESubmitProcess: successfully submit";
-    cleanupSubmittedFiles();
+    cleanupSubmittedFiles(submittedPathes());
     scheduleNextQuery();
   }
   else
   {
+    LROEUploadResponseDocument document(response.document);
+
     qDebug() << "LROESubmitProcess: failed to submit";
+    cleanupSubmittedFiles(document.submittedFiles(submittedPathes()));
     emit errorOccured(response);
     emit finished();
   }
@@ -160,16 +165,26 @@ void LROESubmitProcess::breakDownQueryFor(const QStringList& tbaiFiles)
   }
 }
 
-void LROESubmitProcess::cleanupSubmittedFiles()
+QStringList LROESubmitProcess::submittedPathes() const
 {
-  for (const QString& filename : submittingFiles)
-  {
-    QString filepath = storagePathFromFileName(filename);
+  QStringList result;
 
-    if (QFile(filepath).remove())
-      qDebug() << "- remove submitted invoice" << filename;
+  for (const QString& filename : submittingFiles)
+    result << storagePathFromFileName(filename);
+  return result;
+}
+
+void LROESubmitProcess::cleanupSubmittedFiles(const QStringList& list)
+{
+  for (const QString& filepath : list)
+  {
+    QFile file(filepath);
+    QFileInfo fileInfo(file);
+
+    if (file.remove())
+      qDebug() << "- remove submitted invoice" << fileInfo.fileName();
     else
-      qDebug() << "- failed to remove submitted invoice" << filepath;
+      qDebug() << "- failed to remove submitted invoice" << fileInfo.fileName();
   }
   submittingFiles.clear();
 }

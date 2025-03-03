@@ -32,8 +32,9 @@ private:
   void           makeQueryFor(const QStringList& tbaiFiles);
   void           scheduleNextQuery();
   void           onResponseReceived(const Response&);
-  void           cleanupSubmittedFiles();
+  void           cleanupSubmittedFiles(const QStringList&);
   QString        storagePathFromFileName(const QString&) const;
+  QStringList    submittedPathes() const;
 
   QVector<QStringList> groups;
   QStringList submittingFiles;
