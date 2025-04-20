@@ -42,6 +42,7 @@ public:
     }
     double                total()      const
     {
+      // AlternativeTotal and old total should be the same here, shouldn't it ?? Next line is uselss then.
       switch (policy) { case AlternativeTotal: return std::round((base + taxFee() + recargoFee()) * 100) / 100; }
       return base + taxFee() + recargoFee();
     }
