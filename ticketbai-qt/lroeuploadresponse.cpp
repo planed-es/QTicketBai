@@ -128,23 +128,30 @@ static bool isNextInvoice(const TbaiInvoiceInterface* a, const TbaiInvoiceInterf
 
 static QSharedPointer<TbaiDocument> findNextInvoice(const QList<QSharedPointer<TbaiDocument>>& list, const QSharedPointer<TbaiDocument>& invoice)
 {
-  for (const auto& candidate : list)
+  if (invoice)
   {
-    if (candidate->previousInvoiceNumber() == invoice->invoiceNumber()
-    && candidate->previousInvoiceSerie() == invoice->invoiceSerie())
-      return candidate;
+    for (const auto& candidate : list)
+    {
+      if (candidate
+      && candidate->previousInvoiceNumber() == invoice->invoiceNumber()
+      && candidate->previousInvoiceSerie() == invoice->invoiceSerie())
+        return candidate;
+    }
   }
   return nullptr;
 }
 
 static bool isNextDocument(QSharedPointer<TbaiDocument> a, QSharedPointer<TbaiDocument> b, const QList<QSharedPointer<TbaiDocument>>& list)
 {
-  QSharedPointer<TbaiDocument> result = a;
-
-  while ((result = findNextInvoice(list, result)))
+  if (a && b)
   {
-    if (result == b)
-      return true;
+    QSharedPointer<TbaiDocument> result = a;
+
+    while ((result = findNextInvoice(list, result)))
+    {
+      if (result == b)
+        return true;
+    }
   }
   return false;
 }
