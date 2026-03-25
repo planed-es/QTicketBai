@@ -136,7 +136,7 @@ void LROESubmitProcess::onResponseReceived(const Response& response)
 
     qDebug() << "LROESubmitProcess: failed to submit";
     cleanupSubmittedFiles(document.submittedFiles(submittedPathes()));
-    emit errorOccured(response);
+    emit errorOccured(response, document.errorEntries());
     emit finished();
   }
 }

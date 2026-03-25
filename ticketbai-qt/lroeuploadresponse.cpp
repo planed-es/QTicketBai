@@ -69,6 +69,18 @@ void LROEUploadResponseDocument::addEntry(const QDomElement element)
   m_entries << entry;
 }
 
+QList<LROEUploadResponseDocument::Entry> LROEUploadResponseDocument::errorEntries() const
+{
+  QList<LROEUploadResponseDocument::Entry> result;
+
+  for (const auto& entry : m_entries)
+  {
+    if (!entry.success)
+      result.push_back(entry);
+  }
+  return result;
+}
+
 std::optional<LROEUploadResponseDocument::Entry> LROEUploadResponseDocument::find(const TbaiInvoiceInterface& invoice) const
 {
   auto it = std::find(m_entries.begin(), m_entries.end(), invoice);
@@ -179,8 +191,6 @@ QStringList LROEUploadResponseDocument::submittedFiles(const QStringList& filepa
   {
     if (passed(document->invoiceSerie(), document->invoiceNumber()))
       submitted << pathMap[document.get()];
-    else
-      break ;
   }
   return submitted;
 }
