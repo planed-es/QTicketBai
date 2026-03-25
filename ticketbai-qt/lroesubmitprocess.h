@@ -5,6 +5,7 @@
 # include <QVector>
 # include <QNetworkReply>
 # include "lroeclient.h"
+# include "lroeuploadresponse.h"
 
 class LROESubmitProcessTest;
 
@@ -25,7 +26,7 @@ public:
 signals:
   void finished();
   void success();
-  void errorOccured(Response);
+  void errorOccured(Response, QList<LROEUploadResponseDocument::Entry> errors);
 
 private:
   void           breakDownQueryFor(const QStringList& tbaiFiles);

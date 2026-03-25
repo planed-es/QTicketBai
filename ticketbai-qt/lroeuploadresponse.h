@@ -21,6 +21,7 @@ public:
   LROEUploadResponseDocument(QDomDocument document);
 
   const QList<Entry>& entries() const { return m_entries; }
+  QList<Entry> errorEntries() const;
   std::optional<Entry> find(const TbaiInvoiceInterface&) const;
   std::optional<Entry> find(const QByteArray& series, const QByteArray& number) const;
   bool passed(const TbaiInvoiceInterface&) const;
