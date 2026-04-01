@@ -6,6 +6,16 @@
 #include <QSslKey>
 #include <QDebug>
 
+[[nodiscard]] static bool prepareTemporaryFile(QTemporaryFile& file)
+{
+  if (file.open())
+  {
+    file.close();
+    return true;
+  }
+  return false;
+}
+
 TbaiCertificate::TbaiCertificate(QObject* parent) : QObject(parent)
 {
   connect(this, &TbaiCertificate::pathChanged,     this, &TbaiCertificate::refresh);
@@ -53,23 +63,26 @@ bool TbaiCertificate::prepare()
     QFile pfxFile(path());
 
     // Prepare pem temporary files
-    _pemCertificateFile.open(); _pemCertificateFile.close();
-    _pemKeyFile.open(); _pemKeyFile.close();
-    // Load PKCS12 certificate
-    if (pfxFile.open(QIODevice::ReadOnly))
+    if (prepareTemporaryFile(_pemCertificateFile) && prepareTemporaryFile(_pemKeyFile))
     {
-      bool a = preparePemCertificates();
-      bool b = QSslCertificate::importPkcs12(&pfxFile, &_sslKey, &_certificate, nullptr, password().toUtf8());
+      // Load PKCS12 certificate
+      if (pfxFile.open(QIODevice::ReadOnly))
+      {
+        bool a = preparePemCertificates();
+        bool b = QSslCertificate::importPkcs12(&pfxFile, &_sslKey, &_certificate, nullptr, password().toUtf8());
 
-      if (!a)
-        qDebug() << "TbaiCertificate: failed to generate certificate and key in PEM format from" << TbaiCertificate::path();
-      if (!b)
-        qDebug() << "TbaiCertificate: QSslCertificate failed to import pkcs12 certificate" << TbaiCertificate::path();
-      _prepared = a && b;
-      emit readyChanged();
+        if (!a)
+          qDebug() << "TbaiCertificate: failed to generate certificate and key in PEM format from" << TbaiCertificate::path();
+        if (!b)
+          qDebug() << "TbaiCertificate: QSslCertificate failed to import pkcs12 certificate" << TbaiCertificate::path();
+        _prepared = a && b;
+        emit readyChanged();
+      }
+      else
+        qDebug() << "TbaiCertificate: cannot open file" << path();
     }
     else
-      qDebug() << "TbaiCertificate: cannot open file" << path();
+      qDebug() << "TbaiCertificate: QTemporaryFile failed to create temporary storage for certificate and key";
   }
   return _prepared;
 }
